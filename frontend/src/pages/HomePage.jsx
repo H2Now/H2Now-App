@@ -61,29 +61,63 @@ function HomePage() {
                 </div>
             </div>
             <div className="py-20">
-                <div className="container mx-auto max-w-[80%]">
-                    <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
-                        Everything you need
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="text-center px-4 py-6 rounded-xl border-t border-l border-6 border-gray-300">
-                            <div className="text-5xl mb-4">💧</div>
-                            <h3 className="text-xl font-bold mb-2">Smart Tracking</h3>
-                            <p className="text-gray-600">Automatic hydration monitoring throughout your day</p>
-                        </div>
-                        <div className="text-center px-4 py-6 rounded-xl border-t border-l border-6 border-gray-300">
-                            <div className="text-5xl mb-4">📊</div>
-                            <h3 className="text-xl font-bold mb-2">Personalized Goals</h3>
-                            <p className="text-gray-600">Custom hydration targets based on your lifestyle</p>
-                        </div>
-                        <div className="text-center px-4 py-6 rounded-xl border-t border-l border-6 border-gray-300">
-                            <div className="text-5xl mb-4">🔔</div>
-                            <h3 className="text-xl font-bold mb-2">Smart Reminders</h3>
-                            <p className="text-gray-600">Gentle nudges to keep you hydrated all day</p>
+                <div className="container mx-auto max-w-[80%] rounded-2xl overflow-hidden"
+                     style={{
+                         background: 'linear-gradient(180deg, #0b0e12 0%, #24283a 30%, #2f374f 60%, #2b3a5a 100%)',
+                     }}
+                >
+                    <div className="px-8 py-16">
+                        <h2 className="text-4xl md:text-5xl font-bold text-center mb-12 text-white">
+                            Everything you need
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="text-center px-6 py-8 rounded-xl bg-white/6 backdrop-blur-sm">
+                                <div className="text-5xl mb-4">💧</div>
+                                <h3 className="text-xl font-bold mb-2 text-white">Smart Tracking</h3>
+                                <p className="text-gray-300">Automatic hydration monitoring throughout your day</p>
+                            </div>
+                            <div className="text-center px-6 py-8 rounded-xl bg-white/6 backdrop-blur-sm">
+                                <div className="text-5xl mb-4">📊</div>
+                                <h3 className="text-xl font-bold mb-2 text-white">Personalized Goals</h3>
+                                <p className="text-gray-300">Custom hydration targets based on your lifestyle</p>
+                            </div>
+                            <div className="text-center px-6 py-8 rounded-xl bg-white/6 backdrop-blur-sm">
+                                <div className="text-5xl mb-4">🔔</div>
+                                <h3 className="text-xl font-bold mb-2 text-white">Smart Reminders</h3>
+                                <p className="text-gray-300">Gentle nudges to keep you hydrated all day</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+           
+            <div className="w-full h-screen relative flex items-center">
+                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/way.jpg')" }} />
+                <div className="absolute inset-0 bg-black/45" />
+                <div className="container mx-auto max-w-[80%] relative z-10 flex items-center gap-12">
+                    <div className="w-full md:w-1/2 text-white">
+                        <h2 className="text-5xl font-extrabold mb-6">Stay. On. Track.</h2>
+                        <p className="text-lg mb-6 leading-relaxed">
+                            Our dedicated application allows you to keep track of all your bottles to ensure
+                            you achieve your hydration goals.
+                        </p>
+                        <p className="text-2xl font-bold">Achieve your best.</p>
+
+                        {/* show a smaller version of bottles image on mobile (50% width) */}
+                        <div className="mt-20 md:hidden flex justify-center">
+                            <img src="/images/bottles.jpg" alt="bottles" className="w-1/2 h-auto object-contain rounded-lg shadow-lg" />
+                        </div>
+                    </div>
+
+                    <div className="hidden md:flex w-1/2 justify-end">
+                        {/* show the bottles image directly on desktop with phone-panel dimensions */}
+                        <div className="w-[320px] h-[680px] rounded-2xl overflow-hidden shadow-2xl">
+                            <img src="/images/bottles.jpg" alt="bottles" className="w-full h-full object-cover" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </>
 
     )
