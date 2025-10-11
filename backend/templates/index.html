@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block body %}
+    {% if name %}
+        <p>Welcome {{ name }} ({{ email }})</p>
+    {% else %}
+        <p>You're not logged in!</p>
+        <a href="/api/login">Log in</a>
+    {% endif %}
+{% endblock %}
