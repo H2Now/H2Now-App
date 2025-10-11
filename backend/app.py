@@ -59,7 +59,7 @@ def create_test_user():
     conn.close()
 
 
-# create_test_user() # Comment if test user already created
+create_test_user() # Comment if test user already created
 
 
 # Login endpoint. Verifies email and password hash
