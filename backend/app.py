@@ -43,7 +43,6 @@ def create_test_user():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    userID = "testID1"
     name = "Test User"
     email = "test@example.com"
     password = TEST_PASSWORD.encode('utf-8') # Convert into bytes for hashing to work
@@ -51,8 +50,8 @@ def create_test_user():
     hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
 
     cursor.execute(
-        "INSERT INTO User (userID, name, email, password) VALUES (%s, %s, %s, %s)",
-        (userID, name, email, hashed_password.decode('utf-8'))  # Decode password beforehand
+        "INSERT INTO User (name, email, password) VALUES (%s, %s, %s)",
+        (name, email, hashed_password.decode('utf-8'))  # Decode password beforehand
     )
 
     conn.commit()
@@ -60,7 +59,7 @@ def create_test_user():
     conn.close()
 
 
-create_test_user() # Comment if test user already created
+# create_test_user() # Comment if test user already created
 
 
 # Login endpoint. Verifies email and password hash

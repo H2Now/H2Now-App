@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS User;
 -- USER TABLE
 -- ==============================
 CREATE TABLE User (
-    userID VARCHAR(20) PRIMARY KEY,
+    userID INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(150) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE User (
 -- ==============================
 CREATE TABLE Bottle (
     bottleID INT AUTO_INCREMENT PRIMARY KEY,
-    userID VARCHAR(20) NOT NULL,
+    userID INT NOT NULL,
     bottleName VARCHAR(150) NOT NULL,
     capacity DECIMAL(6,2) NOT NULL,
     goal DECIMAL(6,2) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE Bottle (
 -- ==============================
 CREATE TABLE Intake (
     intakeID INT AUTO_INCREMENT PRIMARY KEY,
-    userID VARCHAR(20) NOT NULL,
+    userID INT NOT NULL,
     bottleID INT NOT NULL,
     intakeDate DATE NOT NULL,
     totalIntake DECIMAL(6,2) NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE Intake (
 -- USER PREFERENCES TABLE
 -- ==============================
 CREATE TABLE UserPreferences (
-    userID VARCHAR(20) PRIMARY KEY,
+    userID INT AUTO_INCREMENT PRIMARY KEY,
     reminderFreq INT NOT NULL,
     themeMode ENUM('light','dark','system') DEFAULT 'system',
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
