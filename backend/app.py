@@ -59,24 +59,25 @@ def create_test_user():
     conn.close()
 
 
-create_test_user() # Comment if test user already created
+# create_test_user() # Comment if test user already created
 
 
 # Login endpoint. Verifies email and password hash
-@app.route("/api/login", methods=["GET", "POST"])
+@app.route("/api/auth/login", methods=["POST"])
 def login():
-    if request.method == "GET":
-        return render_template("login.html") # Backend
-    
-    inputted_email = request.form.get("email")
-    inputted_password = request.form.get("password").encode('utf-8') # Turn into bytes for comparing hash
+    data = request.get_json(silent=True)
+    email = data.get("email")
+    password = data.get("password").encode("utf-8")
+
+    if not email or not password:
+        return jsonify({"error": "Email and password required"}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True) # Return map/dictionary instead of tuple
 
     cursor.execute(
         "SELECT * FROM User WHERE email=%s", 
-        [inputted_email]
+        [email]
     )
 
     user = cursor.fetchone()
@@ -86,12 +87,12 @@ def login():
     hashed_password = user["password"].encode('utf-8')
 
     # Compare hashes and continue if valid
-    if user and bcrypt.checkpw(inputted_password, hashed_password):
+    if user and bcrypt.checkpw(password, hashed_password):
         print("Valid")
-        return render_template("index.html", name=user["name"], email=user["email"], password=user["password"])
+        return jsonify({"message": "Login successfully", "user": user})
     
     print("Invalid")
-    return redirect("/api/login")
+    return jsonify({"message": "Invalid login details"}), 401
 
 
 if __name__ == "__main__":
