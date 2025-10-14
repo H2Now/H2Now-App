@@ -6,12 +6,29 @@ function LoginPage() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [warning, setWarning] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setWarning(null);
+        
+        // Validation for empty fields
+        if (!email.trim() || !password.trim()) {
+            setWarning("Please fill in all required fields");
+            setLoading(false);
+            return;
+        }
+        
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            setWarning("Please enter a valid email address");
+            setLoading(false);
+            return;
+        }
         
         try {
             const res = await fetch("http://localhost:5000/api/auth/login", {
@@ -79,8 +96,20 @@ function LoginPage() {
                         </div>
                     )}
 
+                    {/* Warning Message */}
+                    {warning && (
+                        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-8 sm:mb-6">
+                            <div className="flex">
+                                <svg className="h-5 w-5 text-amber-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-sm">{warning}</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Form */}
-                    <form onSubmit={handleLoginSubmit} className="space-y-6 sm:space-y-6">
+                    <form onSubmit={handleLoginSubmit} noValidate className="space-y-6 sm:space-y-6">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 sm:mb-2">
                                 Email Address
@@ -100,7 +129,6 @@ function LoginPage() {
                                     placeholder="Enter your email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    required
                                     className="block w-full pl-9 sm:pl-10 pr-3 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 text-gray-900 bg-white/90 text-sm sm:text-base"
                                 />
                             </div>
@@ -124,7 +152,6 @@ function LoginPage() {
                                     placeholder="Enter your password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    required
                                     className="block w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 text-gray-900 bg-white/90 text-sm sm:text-base"
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
