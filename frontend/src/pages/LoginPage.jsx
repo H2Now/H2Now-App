@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 
 function LoginPage() {
-    // TBC: display a modal containing data.message
+    // TBC: display data.message to show backend error handling
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -41,13 +41,13 @@ function LoginPage() {
             })
             const data = await res.json();
 
-            if (!data.success) {
-                setError(data.message);
+            if (!res.ok || !data.success) {
+                setError(data.message || "Something went wrong.. Please try again!");
             } else {
-                console.log("Login successfully!")
+                console.log("Login successfully!");
             }
         } catch (error) {
-            alert("Something went wrong. Please try again.", error);
+            alert("Something went wrong.. Please try again!");
         } finally {
             setLoading(false);
         }
@@ -184,8 +184,9 @@ function LoginPage() {
                         <button
                             type="submit"
                             className="w-full flex justify-center py-2.5 sm:py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm sm:text-base font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 touch-manipulation"
+                                        
                         >
-                            Sign in
+                            {loading ? "Signing in..." : "Sign in"}
                         </button>
 
                         <div className="text-center">
