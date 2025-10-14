@@ -4,6 +4,7 @@ import mysql.connector
 from dotenv import load_dotenv
 import os
 import bcrypt
+import re
 
 load_dotenv()
 
@@ -41,32 +42,39 @@ def register():
     email = data.get("email")
     password = data.get("password")
 
-    # error handling
-    errors = {}
-    if not name:
-        errors["username"] = "Username is required"
-    if not email:
-        errors["email"] = "Email is required"
-    elif "@" not in email:
-        errors["email"] = "Invalid email format"
-    if not password or len(password) < 8 or len(password) > 32:
-        errors["password"] = "Password must be 8-32 characters"
-    if errors:
-        print(errors)
-        # returns an array of error/s
-        return jsonify({"success": False, "errors": errors}), 400
+    # check for empty fields
+    if not name or not email or not password:
+        return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
     
+    # Email validation
+    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+    if not re.match(email_regex, email):
+        return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
+
+    # Password validation (8–32 chars, one uppercase, one lowercase, one special character)
+    password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,32}$"
+    if not re.match(password_regex, password):
+        return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
+
     hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # check if username or email already exists
+        cursor.execute(
+            "SELECT userID from User WHERE email=%s OR name=%s", 
+            (email, name))
+        existing_user = cursor.fetchone()
+        if existing_user:
+            return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
+        
+        # insert new user
         cursor.execute(
             "INSERT INTO User (name, email, password) VALUES(%s, %s, %s)",
             (name, email, hashed_password.decode('utf-8'))
         )
-
         conn.commit()
     finally:
         cursor.close()
@@ -94,7 +102,6 @@ def login():
             "SELECT * FROM User WHERE email=%s", 
             [email]
         )
-
         user = cursor.fetchone()
     finally:
         cursor.close()
@@ -102,7 +109,7 @@ def login():
 
     # if user is not found, return immediately
     if not user:
-        return jsonify({"success": False, "message": "Invalid login details"})
+        return jsonify({"success": False, "message": "Invalid login details"}), 400
 
     hashed_password = user["password"].encode('utf-8')
 

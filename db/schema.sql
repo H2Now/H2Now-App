@@ -15,7 +15,7 @@ CREATE TABLE User (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(150) UNIQUE NOT NULL,
     profilePic VARCHAR(255),
     streakStart DATE,
     streak INT

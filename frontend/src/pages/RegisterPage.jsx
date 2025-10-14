@@ -5,11 +5,11 @@ function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
+    const [error, setError] = useState(null);
 
     const handleRegisterSubmit = async (e) => {
-        setErrors({});
         e.preventDefault();
+        setError(null);
         setLoading(true);
         try {
             const res = await fetch("http://localhost:5000/api/auth/register", {
@@ -19,13 +19,13 @@ function RegisterPage() {
             })
             const data = await res.json();
 
-            if (!data.success) {
-                setErrors(data.errors);
+            if (!res.ok || !data.success) {
+                setError(data.message || "Something went wrong.. Please try again!");
             } else {
                 console.log("Register successfully!")
             }
         } catch (error) {
-            alert("Something went wrong. Please try again.", error);
+            alert("Something went wrong.. Please try again!");
         } finally {
             setLoading(false);
         }
@@ -33,10 +33,10 @@ function RegisterPage() {
 
     return (
         <div>
+            {error && <p>{error}</p>}
             <form onSubmit={handleRegisterSubmit}>
                 <div>
                     <label htmlFor="name">Username</label><br />
-                    {errors.username && <p className="error">{errors.username}</p>}
                     <input
                         className="w-[400px] border-1 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="text"
@@ -50,7 +50,6 @@ function RegisterPage() {
                 </div>
                 <div>
                     <label htmlFor="email">Email</label><br />
-                    {errors.email && <p className="error">{errors.email}</p>}
                     <input
                         className="w-[400px] border-1 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="email"
@@ -64,7 +63,6 @@ function RegisterPage() {
                 </div>
                 <div>
                     <label htmlFor="password">Password</label><br />
-                    {errors.password && <p className="error">{errors.password}</p>}
                     <input
                         className="w-[400px] border-1 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="password"
