@@ -49,10 +49,10 @@ function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center px-6 py-8 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center px-6 py-8 sm:px-6 lg:px-8">
             {/* Background Pattern */}
             <div className="absolute inset-0 overflow-hidden">
-                <svg className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-blue-200 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)] opacity-30 sm:opacity-100" aria-hidden="true">
+                <svg className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-blue-200 dark:stroke-slate-700 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)] opacity-30 sm:opacity-100 dark:opacity-20" aria-hidden="true">
                     <defs>
                         <pattern id="e813992c-7d03-4cc4-a2bd-151760b470a0" width={200} height={200} x="50%" y={-1} patternUnits="userSpaceOnUse">
                             <path d="M100 200V.5M.5 .5H200" fill="none" />
@@ -64,7 +64,7 @@ function LoginPage() {
 
             {/* Login Card */}
             <div className="relative w-full max-w-xs sm:max-w-md space-y-4 sm:space-y-8">
-                <div className="bg-white/85 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-8">
+                <div className="bg-white/85 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50 p-8 sm:p-8">
                     {/* Header */}
                     <div className="text-center">
                         <div className="mx-auto h-24 w-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 sm:mb-6 overflow-hidden">
@@ -81,14 +81,14 @@ function LoginPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 9.172V5L8 4z" />
                             </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-5">Welcome Back</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-5">Welcome Back</h2>
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-8 sm:mb-6">
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-8 sm:mb-6">
                             <div className="flex">
-                                <svg className="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <svg className="h-5 w-5 text-red-400 dark:text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                 </svg>
                                 <span className="text-sm">{error}</span>
@@ -98,9 +98,9 @@ function LoginPage() {
 
                     {/* Warning Message */}
                     {warning && (
-                        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-8 sm:mb-6">
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 px-4 py-3 rounded-lg mb-8 sm:mb-6">
                             <div className="flex">
-                                <svg className="h-5 w-5 text-amber-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <svg className="h-5 w-5 text-amber-500 dark:text-amber-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
                                 <span className="text-sm">{warning}</span>
@@ -111,12 +111,12 @@ function LoginPage() {
                     {/* Form */}
                     <form onSubmit={handleLoginSubmit} noValidate className="space-y-6 sm:space-y-6">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 sm:mb-2">
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 sm:mb-2">
                                 Email Address
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                                         <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                                     </svg>
@@ -129,18 +129,18 @@ function LoginPage() {
                                     placeholder="Enter your email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="block w-full pl-9 sm:pl-10 pr-3 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 text-gray-900 bg-white/90 text-sm sm:text-base"
+                                    className="block w-full pl-9 sm:pl-10 pr-3 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white bg-white/90 dark:bg-slate-700/90 text-sm sm:text-base"
                                 />
                             </div>
                         </div>
 
                         <div className="mb-10">
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 sm:mb-2">
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 sm:mb-2">
                                 Password
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                                     </svg>
                                 </div>
@@ -152,13 +152,13 @@ function LoginPage() {
                                     placeholder="Enter your password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 text-gray-900 bg-white/90 text-sm sm:text-base"
+                                    className="block w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white bg-white/90 dark:bg-slate-700/90 text-sm sm:text-base"
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="text-gray-400 hover:text-gray-600 focus:outline-none touch-manipulation p-1"
+                                        className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none touch-manipulation p-1"
                                     >
                                         {showPassword ? (
                                             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -184,11 +184,11 @@ function LoginPage() {
                         </button>
 
                         <div className="text-center">
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
                                 Don't have an account?{' '}
                                 <Link 
                                     to="/register" 
-                                    className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                                    className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
                                 >
                                     Sign up 
                                 </Link>
