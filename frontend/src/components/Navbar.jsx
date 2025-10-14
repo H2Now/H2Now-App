@@ -1,6 +1,6 @@
 function Navbar() {
     return (
-        <p>navbar goes here</p>
+        <p className="hidden sm:block">navbar goes here</p>
     )
 }
 
