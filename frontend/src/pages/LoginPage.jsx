@@ -57,7 +57,7 @@ function LoginPage() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center px-6 py-8 sm:px-6 lg:px-8">
             {/* Background Pattern */}
             <div className="absolute inset-0 overflow-hidden">
-                <svg className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-blue-200 dark:stroke-slate-700 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)] opacity-30 sm:opacity-100 dark:opacity-20" aria-hidden="true">
+                <svg className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-blue-200 dark:stroke-slate-400 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)] opacity-30 sm:opacity-100 dark:opacity-20" aria-hidden="true">
                     <defs>
                         <pattern id="e813992c-7d03-4cc4-a2bd-151760b470a0" width={200} height={200} x="50%" y={-1} patternUnits="userSpaceOnUse">
                             <path d="M100 200V.5M.5 .5H200" fill="none" />
