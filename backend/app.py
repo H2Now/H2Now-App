@@ -1,10 +1,11 @@
-from flask import Flask, jsonify, render_template, request, redirect
+from flask import Flask, jsonify, request, session
 from flask_cors import CORS
 import mysql.connector
 from dotenv import load_dotenv
 import os
 import bcrypt
 import re
+from flask_session import Session
 
 load_dotenv()
 
@@ -12,10 +13,20 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
-TEST_PASSWORD = os.getenv("TEST_PASSWORD")
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173"])
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+
+app.secret_key = os.getenv("SECRET_KEY")
+
+# stores the session id in a file system (folder called flask_session)
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_FILE_DIR"] = "./flask_session"
+# uses secret key to sign the cookies
+app.config["SESSION_USE_SIGNER"] = True
+app.config["SESSION_PERMANENT"] = False
+
+Session(app)
 
 # Get DB credentials from .env and connect
 def get_db_connection():
@@ -27,18 +38,12 @@ def get_db_connection():
     )
 
 
-# Test API end-point
-@app.route("/api/test", methods=["GET"])
-def hello():
-    return jsonify({"message": "Hello World"})
-
-
 # Register endpoint. Creates user and hashes password
 @app.route("/api/auth/register", methods=["POST"])
 def register():
     data = request.get_json(silent=True)
 
-    name = data.get("username")
+    name = data.get("name")
     email = data.get("email")
     password = data.get("password")
 
@@ -52,7 +57,7 @@ def register():
         return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
 
     # Password validation (8–32 chars, one uppercase, one lowercase, one special character)
-    password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,32}$"
+    password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,32}$"
     if not re.match(password_regex, password):
         return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
 
@@ -115,9 +120,25 @@ def login():
 
     # Compare hashes and continue if valid
     if user and bcrypt.checkpw(password, hashed_password):
+        session["user_id"] = user["userID"]
+        session["email"] = user["email"]
         return jsonify({"success": True, "message": "Login successfully"}), 201
 
     return jsonify({"success": False, "message": "Invalid login details"}), 400
+
+# Logout endpoint
+@app.route("/api/auth/logout", methods=["GET"])
+def logout():
+    session.clear()
+    return jsonify({"success": True, "message": "Logged out successfully"}), 200
+
+
+# Check if session cookie exists
+@app.route("/api/auth/check_session", methods=["GET"])
+def check_session():
+    if "user_id" in session:
+        return jsonify({"logged_in": True, "user_id": session["user_id"]}), 200
+    return jsonify({"logged_in": False}), 200
 
 
 if __name__ == "__main__":
