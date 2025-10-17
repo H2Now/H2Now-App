@@ -33,7 +33,7 @@ function PublicRoute() {
     // pause rendering until user is authorized
     if (isChecking) return <div>Loading...</div>
     // renders nested protected routes(<Outlet/>), replace prevents user from going back(using the back button)
-    return authorized ? <Navigate to="/water-bottle" replace /> : <Outlet />
+    return authorized ? <Navigate to="/hub" replace /> : <Outlet />
 }
 
 export default PublicRoute;
