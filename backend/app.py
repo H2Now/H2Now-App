@@ -49,7 +49,7 @@ def register():
 
     # check for empty fields
     if not name or not email or not password:
-        return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
+        return jsonify({"success": False, "message": "Please fill out all fields!"}), 400
     
     # Email validation
     email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
@@ -97,7 +97,7 @@ def login():
 
     # error handling
     if not email or not password:
-        return jsonify({"success": False, "message": "Invalid login details"})
+        return jsonify({"success": False, "message": "Please fill out all fields!"}), 400
     
     try: 
         conn = get_db_connection()
