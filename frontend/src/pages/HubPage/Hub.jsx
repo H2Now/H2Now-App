@@ -7,7 +7,7 @@ export default function Hub() {
         <>
             <Header text="H2Now" />
 
-            <div className="h-[calc(100vh-200px)] overflow-scroll">
+            <div className="h-[calc(100vh-200px)] sm:h-[100vh] overflow-scroll">
                 <Settings />
             </div>
 
