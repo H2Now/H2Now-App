@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function RegisterPage() {
     const [name, setName] = useState("");
@@ -11,6 +11,7 @@ function RegisterPage() {
     const [warning, setWarning] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const navigate = useNavigate();
 
     const handleRegisterSubmit = async (e) => {
         e.preventDefault();
@@ -77,7 +78,8 @@ function RegisterPage() {
             if (!res.ok || !data.success) {
                 setError(data.message || "Something went wrong.. Please try again!");
             } else {
-                console.log("Register successfully!")
+                console.log("Register successfully!");
+                setTimeout(() => navigate("/login"), 1000);
             }
         } catch (error) {
             setError("Something went wrong.. Please try again!");
@@ -106,9 +108,9 @@ function RegisterPage() {
                     {/* Header */}
                     <div className="text-center">
                         <div className="mx-auto h-24 w-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 sm:mb-6 overflow-hidden">
-                            <img 
-                                src="/images/logo.jpg" 
-                                alt="H2Now Logo" 
+                            <img
+                                src="/images/logo.jpg"
+                                alt="H2Now Logo"
                                 className="h-full w-full object-cover rounded-2xl"
                                 onError={(e) => {
                                     e.target.style.display = 'none';
@@ -239,120 +241,109 @@ function RegisterPage() {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             {/* Password Strength Indicator */}
-                            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                                password ? 'max-h-48 opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'
-                            }`}>
+                            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${password ? 'max-h-48 opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'
+                                }`}>
                                 <div className="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
                                     <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">Password requirements:</p>
                                     <div className="space-y-2">
                                         {/* Length Check */}
                                         <div className="flex items-center text-xs">
-                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${
-                                                password.length >= 8 && password.length <= 32
-                                                    ? 'bg-green-500' 
-                                                    : 'bg-gray-300 dark:bg-gray-600'
-                                            }`}>
+                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${password.length >= 8 && password.length <= 32
+                                                ? 'bg-green-500'
+                                                : 'bg-gray-300 dark:bg-gray-600'
+                                                }`}>
                                                 {password.length >= 8 && password.length <= 32 && (
                                                     <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                     </svg>
                                                 )}
                                             </div>
-                                            <span className={`${
-                                                password.length >= 8 && password.length <= 32
-                                                    ? 'text-green-600 dark:text-green-400' 
-                                                    : 'text-gray-500 dark:text-gray-400'
-                                            }`}>
+                                            <span className={`${password.length >= 8 && password.length <= 32
+                                                ? 'text-green-600 dark:text-green-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                                }`}>
                                                 8 to 32 characters in length
                                             </span>
                                         </div>
 
                                         {/* Uppercase Check */}
                                         <div className="flex items-center text-xs">
-                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${
-                                                /[A-Z]/.test(password)
-                                                    ? 'bg-green-500' 
-                                                    : 'bg-gray-300 dark:bg-gray-600'
-                                            }`}>
+                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${/[A-Z]/.test(password)
+                                                ? 'bg-green-500'
+                                                : 'bg-gray-300 dark:bg-gray-600'
+                                                }`}>
                                                 {/[A-Z]/.test(password) && (
                                                     <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                     </svg>
                                                 )}
                                             </div>
-                                            <span className={`${
-                                                /[A-Z]/.test(password)
-                                                    ? 'text-green-600 dark:text-green-400' 
-                                                    : 'text-gray-500 dark:text-gray-400'
-                                            }`}>
+                                            <span className={`${/[A-Z]/.test(password)
+                                                ? 'text-green-600 dark:text-green-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                                }`}>
                                                 Has uppercase letter
                                             </span>
                                         </div>
 
                                         {/* Lowercase Check */}
                                         <div className="flex items-center text-xs">
-                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${
-                                                /[a-z]/.test(password)
-                                                    ? 'bg-green-500' 
-                                                    : 'bg-gray-300 dark:bg-gray-600'
-                                            }`}>
+                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${/[a-z]/.test(password)
+                                                ? 'bg-green-500'
+                                                : 'bg-gray-300 dark:bg-gray-600'
+                                                }`}>
                                                 {/[a-z]/.test(password) && (
                                                     <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                     </svg>
                                                 )}
                                             </div>
-                                            <span className={`${
-                                                /[a-z]/.test(password)
-                                                    ? 'text-green-600 dark:text-green-400' 
-                                                    : 'text-gray-500 dark:text-gray-400'
-                                            }`}>
+                                            <span className={`${/[a-z]/.test(password)
+                                                ? 'text-green-600 dark:text-green-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                                }`}>
                                                 Has lowercase letter
                                             </span>
                                         </div>
 
                                         {/* Number Check */}
                                         <div className="flex items-center text-xs">
-                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${
-                                                /\d/.test(password)
-                                                    ? 'bg-green-500' 
-                                                    : 'bg-gray-300 dark:bg-gray-600'
-                                            }`}>
+                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${/\d/.test(password)
+                                                ? 'bg-green-500'
+                                                : 'bg-gray-300 dark:bg-gray-600'
+                                                }`}>
                                                 {/\d/.test(password) && (
                                                     <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                     </svg>
                                                 )}
                                             </div>
-                                            <span className={`${
-                                                /\d/.test(password)
-                                                    ? 'text-green-600 dark:text-green-400' 
-                                                    : 'text-gray-500 dark:text-gray-400'
-                                            }`}>
+                                            <span className={`${/\d/.test(password)
+                                                ? 'text-green-600 dark:text-green-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                                }`}>
                                                 Has number
                                             </span>
                                         </div>
 
                                         {/* Special Character Check */}
                                         <div className="flex items-center text-xs">
-                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${
-                                                /[!@#$%^&*(),.?":{}|<>]/.test(password)
-                                                    ? 'bg-green-500' 
-                                                    : 'bg-gray-300 dark:bg-gray-600'
-                                            }`}>
+                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${/[!@#$%^&*(),.?":{}|<>]/.test(password)
+                                                ? 'bg-green-500'
+                                                : 'bg-gray-300 dark:bg-gray-600'
+                                                }`}>
                                                 {/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
                                                     <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                     </svg>
                                                 )}
                                             </div>
-                                            <span className={`${
-                                                /[!@#$%^&*(),.?":{}|<>]/.test(password)
-                                                    ? 'text-green-600 dark:text-green-400' 
-                                                    : 'text-gray-500 dark:text-gray-400'
-                                            }`}>
+                                            <span className={`${/[!@#$%^&*(),.?":{}|<>]/.test(password)
+                                                ? 'text-green-600 dark:text-green-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                                }`}>
                                                 Has special character
                                             </span>
                                         </div>
@@ -415,8 +406,8 @@ function RegisterPage() {
                         <div className="text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-300">
                                 Already have an account?{' '}
-                                <Link 
-                                    to="/login" 
+                                <Link
+                                    to="/login"
                                     className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
                                 >
                                     Sign in
