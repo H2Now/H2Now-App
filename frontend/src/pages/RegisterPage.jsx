@@ -41,21 +41,14 @@ function RegisterPage() {
             return;
         }
 
-        // Password validation
-        if (password.length < 8) {
-            setWarning("Password must be at least 8 characters long");
-            setLoading(false);
-            return;
-        }
-
         // Check password strength requirements
         const hasUppercase = /[A-Z]/.test(password);
         const hasLowercase = /[a-z]/.test(password);
         const hasNumber = /\d/.test(password);
         const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-        if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
-            setWarning("Password must contain uppercase, lowercase, number, and special character");
+        if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar || password.length < 8) {
+            setWarning("Password requirements not met.");
             setLoading(false);
             return;
         }
@@ -163,6 +156,7 @@ function RegisterPage() {
                                     </svg>
                                 </div>
                                 <input
+                                    autoFocus
                                     id="name"
                                     type="text"
                                     name="name"
