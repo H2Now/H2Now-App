@@ -1,10 +1,9 @@
 import { Route, Routes, useLocation } from "react-router-dom"
 import HomePage from "./pages/HomePage"
-import Hub from "./pages/HubPage/Hub"
+import Hub from "./pages/hub_pages/Hub"
 import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
-import InterfacePage from "./pages/InterfacePage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import PublicRoute from "./components/PublicRoute"
 
@@ -23,7 +22,7 @@ function App() {
 					<Route path="/register" element={<RegisterPage />}></Route>
 				</Route>
 				<Route element={<ProtectedRoute />}>
-					<Route path="/water-bottle" element={<InterfacePage />}></Route>
+					<Route path="/hub" element={<Hub />}></Route>
 				</Route>
 			</Routes>
 		</>
