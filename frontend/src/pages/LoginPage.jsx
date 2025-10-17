@@ -129,6 +129,7 @@ function LoginPage() {
                                     </svg>
                                 </div>
                                 <input
+                                    autoFocus
                                     id="email"
                                     type="email"
                                     name="email"
