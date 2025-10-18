@@ -4,6 +4,8 @@ import Hub from "./pages/hub_pages/Hub"
 import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
+import ProtectedRoute from "./components/ProtectedRoute"
+import PublicRoute from "./components/PublicRoute"
 
 function App() {
 	const location = useLocation();
@@ -15,9 +17,13 @@ function App() {
 			{shouldShowNavbar && <Navbar />}
 			<Routes>
 				<Route path="/" element={<HomePage />}></Route>
-				<Route path="/hub" element={<Hub />}></Route>
-				<Route path="/login" element={<LoginPage />}></Route>
-				<Route path="/register" element={<RegisterPage/>}></Route>
+				<Route element={<PublicRoute />}>
+					<Route path="/login" element={<LoginPage />}></Route>
+					<Route path="/register" element={<RegisterPage />}></Route>
+				</Route>
+				<Route element={<ProtectedRoute />}>
+					<Route path="/hub" element={<Hub />}></Route>
+				</Route>
 			</Routes>
 		</>
 	)

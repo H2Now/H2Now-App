@@ -1,28 +1,28 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 
 function LoginPage() {
-    // TBC: display data.message to show backend error handling
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [warning, setWarning] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate(); 
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
         setWarning(null);
-        
+
         // Validation for empty fields
         if (!email.trim() || !password.trim()) {
             setWarning("Please fill in all required fields");
             setLoading(false);
             return;
         }
-        
+
         // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email.trim())) {
@@ -30,13 +30,14 @@ function LoginPage() {
             setLoading(false);
             return;
         }
-        
+
         setError(null)
         setLoading(true);
         try {
             const res = await fetch("http://localhost:5000/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({ email, password }),
             })
             const data = await res.json();
@@ -45,6 +46,7 @@ function LoginPage() {
                 setError(data.message || "Something went wrong.. Please try again!");
             } else {
                 console.log("Login successfully!");
+                setTimeout(() => navigate("/"), 1000)
             }
         } catch (error) {
             alert("Something went wrong.. Please try again!");
@@ -57,7 +59,7 @@ function LoginPage() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center px-6 py-8 sm:px-6 lg:px-8">
             {/* Background Pattern */}
             <div className="absolute inset-0 overflow-hidden">
-                <svg className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-blue-200 dark:stroke-slate-700 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)] opacity-30 sm:opacity-100 dark:opacity-20" aria-hidden="true">
+                <svg className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-blue-200 dark:stroke-slate-400 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)] opacity-30 sm:opacity-100 dark:opacity-20" aria-hidden="true">
                     <defs>
                         <pattern id="e813992c-7d03-4cc4-a2bd-151760b470a0" width={200} height={200} x="50%" y={-1} patternUnits="userSpaceOnUse">
                             <path d="M100 200V.5M.5 .5H200" fill="none" />
@@ -73,9 +75,9 @@ function LoginPage() {
                     {/* Header */}
                     <div className="text-center">
                         <div className="mx-auto h-24 w-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 sm:mb-6 overflow-hidden">
-                            <img 
-                                src="/images/logo.jpg" 
-                                alt="H2Now Logo" 
+                            <img
+                                src="/images/logo.jpg"
+                                alt="H2Now Logo"
                                 className="h-full w-full object-cover rounded-2xl"
                                 onError={(e) => {
                                     e.target.style.display = 'none';
@@ -127,6 +129,7 @@ function LoginPage() {
                                     </svg>
                                 </div>
                                 <input
+                                    autoFocus
                                     id="email"
                                     type="email"
                                     name="email"
@@ -184,7 +187,7 @@ function LoginPage() {
                         <button
                             type="submit"
                             className="w-full flex justify-center py-2.5 sm:py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm sm:text-base font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 touch-manipulation"
-                                        
+
                         >
                             {loading ? "Signing in..." : "Sign in"}
                         </button>
@@ -192,11 +195,11 @@ function LoginPage() {
                         <div className="text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-300">
                                 Don't have an account?{' '}
-                                <Link 
-                                    to="/register" 
+                                <Link
+                                    to="/register"
                                     className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
                                 >
-                                    Sign up 
+                                    Sign up
                                 </Link>
                             </p>
                         </div>
