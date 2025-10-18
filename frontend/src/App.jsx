@@ -1,6 +1,6 @@
 import { Route, Routes, useLocation } from "react-router-dom"
 import HomePage from "./pages/HomePage"
-import Hub from "./pages/HubPage/Hub"
+import Hub from "./pages/hub_pages/Hub"
 import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
