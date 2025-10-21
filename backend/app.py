@@ -87,6 +87,7 @@ def register():
 
     return jsonify({"success": True, "message": "Registration successful! Please login.."}), 201
 
+
 # Login endpoint. Verifies email and password hash
 @app.route("/api/auth/login", methods=["POST"])
 def login():
@@ -125,6 +126,7 @@ def login():
         return jsonify({"success": True, "message": "Login successfully"}), 201
 
     return jsonify({"success": False, "message": "Invalid login details"}), 400
+
 
 # Logout endpoint
 @app.route("/api/auth/logout", methods=["GET"])
