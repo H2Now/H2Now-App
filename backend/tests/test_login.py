@@ -11,6 +11,7 @@ from app import app
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
+    app.config["SECRET_KEY"] = "test_secret"
     with app.test_client() as client:
         yield client
 
@@ -22,7 +23,10 @@ def test_login_valid_user(client, monkeypatch):
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return {"email": "user@test.com", "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+            def fetchone(self): return {
+                "userID": 1,
+                "email": "user@test.com", 
+                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
             def close(self): pass
 
         class MockConn:
@@ -53,7 +57,7 @@ def test_login_invalid_user(client, monkeypatch):
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): None # Return nothing to simulate no user found
+            def fetchone(self): return None # Return nothing to simulate no user found
             def close(self): pass
 
         class MockConn:
@@ -84,7 +88,10 @@ def test_login_missing_credentials(client, monkeypatch):
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return {"email": "user@test.com", "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+            def fetchone(self): return {
+                "userID": 1,
+                "email": "user@test.com", 
+                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
             def close(self): pass
 
         class MockConn:
@@ -115,7 +122,10 @@ def test_login_missing_email(client, monkeypatch):
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return {"email": "user@test.com", "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+            def fetchone(self): return {
+                "userID": 1,
+                "email": "user@test.com", 
+                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
             def close(self): pass
 
         class MockConn:
@@ -146,7 +156,10 @@ def test_login_missing_password(client, monkeypatch):
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return {"email": "user@test.com", "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+            def fetchone(self): return {
+                "userID": 1,
+                "email": "user@test.com", 
+                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
             def close(self): pass
 
         class MockConn:
