@@ -38,10 +38,12 @@ CREATE TABLE Bottle (
 -- ==============================
 CREATE TABLE Intake (
     intakeID INT AUTO_INCREMENT PRIMARY KEY,
+    userID INT NOT NULL,
     bottleID INT NOT NULL,
     intakeDate DATE NOT NULL,
     totalIntake DECIMAL(6,2) NOT NULL,
     goalReached BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE,
     FOREIGN KEY (bottleID) REFERENCES Bottle(bottleID) ON DELETE CASCADE
 );
 
