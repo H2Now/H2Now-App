@@ -51,7 +51,7 @@ CREATE TABLE Intake (
 -- USER PREFERENCES TABLE
 -- ==============================
 CREATE TABLE UserPreferences (
-    userID INT AUTO_INCREMENT PRIMARY KEY,
+    userID INT PRIMARY KEY,
     reminderFreq INT NOT NULL,
     themeMode ENUM('light','dark','system') DEFAULT 'system',
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
