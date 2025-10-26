@@ -22,10 +22,10 @@ function App() {
 					<Route path="/login" element={<LoginPage />}></Route>
 					<Route path="/register" element={<RegisterPage />}></Route>
 				</Route>
-				<Route>
+				<Route element={<ProtectedRoute />}>
 					<Route path="/hub" element={<Hub />}></Route>
 				</Route>
-				<Route>
+				<Route element={<ProtectedRoute />}>
 					<Route path="/my-bottle" element={<MyBottle />}></Route>
 				</Route>
 			</Routes>
