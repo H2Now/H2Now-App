@@ -12,7 +12,7 @@ export default function Hub() {
                 <MyBottle />
             </div>
 
-            <MobileNavbar />
+            <MobileNavbar page="Hub" />
         </>
     )
 }
