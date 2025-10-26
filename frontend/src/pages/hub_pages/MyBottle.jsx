@@ -4,7 +4,7 @@ import Add from "../../assets/icons/add.png"
 import Go from "../../assets/icons/go.png"
 
 export default function MyBottle() {
-    const [connectedBottle, setConnectedBottle] = useState("g")
+    const [connectedBottle, setConnectedBottle] = useState("Sam's Bottle")
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center min-h-[200px]">
