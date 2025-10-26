@@ -21,7 +21,7 @@ function App() {
 					<Route path="/login" element={<LoginPage />}></Route>
 					<Route path="/register" element={<RegisterPage />}></Route>
 				</Route>
-				<Route element={<ProtectedRoute />}>
+				<Route>
 					<Route path="/hub" element={<Hub />}></Route>
 				</Route>
 			</Routes>
