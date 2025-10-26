@@ -11,7 +11,7 @@ export default function Page() {
                 <UserBottle />
             </div>
 
-            <MobileNavbar />
+            <MobileNavbar page="My Bottle" />
         </>
     )
 }
