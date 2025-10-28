@@ -26,7 +26,7 @@ CREATE TABLE User (
 -- ==============================
 CREATE TABLE Bottle (
     bottleID INT AUTO_INCREMENT PRIMARY KEY,
-    userID INT NOT NULL,
+    userID INT UNIQUE NOT NULL,
     bottleName VARCHAR(150) NOT NULL,
     capacity DECIMAL(6,2) NOT NULL,
     goal DECIMAL(6,2) NOT NULL,
@@ -47,11 +47,12 @@ CREATE TABLE Intake (
     FOREIGN KEY (bottleID) REFERENCES Bottle(bottleID) ON DELETE CASCADE
 );
 
+
 -- ==============================
 -- USER PREFERENCES TABLE
 -- ==============================
 CREATE TABLE UserPreferences (
-    userID INT AUTO_INCREMENT PRIMARY KEY,
+    userID INT PRIMARY KEY,
     reminderFreq INT NOT NULL,
     themeMode ENUM('light','dark','system') DEFAULT 'system',
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
