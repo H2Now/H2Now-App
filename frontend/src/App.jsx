@@ -1,6 +1,7 @@
 import { Route, Routes, useLocation } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Hub from "./pages/hub_pages/Hub"
+import MyBottle from "./pages/my_bottle/Page"
 import Account from "./pages/hub_pages/Account"
 import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
@@ -25,6 +26,9 @@ function App() {
 				<Route element={<ProtectedRoute />}>
 					<Route path="/hub" element={<Hub />}></Route>
 					<Route path="/hub/account" element={<Account />}></Route>
+				</Route>
+				<Route element={<ProtectedRoute />}>
+					<Route path="/my-bottle" element={<MyBottle />}></Route>
 				</Route>
 			</Routes>
 		</>
