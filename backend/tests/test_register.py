@@ -16,168 +16,187 @@ def client():
         yield client
 
 
-# Test that checks to see if valid user can login correctly 
-def test_login_valid_user(client, monkeypatch):
+# Test to see if new user can REGISTER SUCCESSFULLY
+def test_register_valid_credentials(client, monkeypatch):
     def mock_get_db_connection():
-        # Simulate and match procedure of db_connection in app.py
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return {
-                "userID": 1,
-                "email": "user@test.com", 
-                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+            def fetchone(self):return None
             def close(self): pass
 
         class MockConn:
             def cursor(self, dictionary=True): return MockCursor()
+            def commit(self): pass
             def close(self): pass
 
         return MockConn()
 
-    # Replace original db_connection temporarily with mock_db_connection when called
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
-        "email": "user@test.com",
-        "password": "password123"
+    response = client.post("/api/auth/register", json={
+        "name": "Theo Picar",
+        "email": "nonexistant@email.com",
+        "password": "Password123!"
     })
 
     # Pass test if following are matched
     assert response.status_code == 201
     assert response.json["success"] == True
-    assert response.json["message"] == "Login successfully"
+    assert response.json["message"] == "Registration successful! Please login.."
 
 
-# Test to make sure invalid user cannot login
-def test_login_invalid_user(client, monkeypatch):
+# Test to see if register blocks users who ALREADY HAVE AN ACCOUNT set up
+def test_register_existing_user(client, monkeypatch):
     def mock_get_db_connection():
-        # Simulate and match procedure of db_connection in app.py
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return None # Return nothing to simulate no user found
-            def close(self): pass
-
-        class MockConn:
-            def cursor(self, dictionary=True): return MockCursor()
-            def close(self): pass
-
-        return MockConn()
-    
-    # Replace original db_connection temporarily with mock_db_connection when called
-    import app
-    monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
-
-    response = client.post("/api/auth/login", json={
-        "email": "user@test.com",
-        "password": "password123"
-    })
-
-    # Pass test if following are matched
-    assert response.status_code == 400
-    assert response.json["success"] == False
-    assert response.json["message"] == "Invalid login details"
-
-
-# Test to make sure forms with any unfilled credentials do not pass
-def test_login_missing_credentials(client, monkeypatch):
-    def mock_get_db_connection():
-        # Simulate and match procedure of db_connection in app.py
-        class MockCursor:
-            def cursor(self, dictionary=True): return self
-            def execute(self, query, params): pass
+            # Return a user, simulating already existing user
             def fetchone(self): return {
                 "userID": 1,
-                "email": "user@test.com", 
-                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+                "name": "Existing User",
+                "email": "thisuseralreadyexists@email.com"
+            }
             def close(self): pass
 
         class MockConn:
             def cursor(self, dictionary=True): return MockCursor()
+            def commit(self): pass
+            def close(self): pass
+
+        return MockConn()
+
+    import app
+    monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
+
+    response = client.post("/api/auth/register", json={
+        "name": "Existing User",
+        "email": "thisuseralreadyexists@email.com",
+        "password": "Password123!"
+    })
+
+    assert response.status_code == 400
+    assert response.json["success"] == False
+    assert response.json["message"] == "Something went wrong.. Please try again!"
+
+
+# Test to see if register blocks user if NO CREDENTIALS are filled
+def test_register_no_credentials(client, monkeypatch):
+    def mock_get_db_connection():
+        class MockCursor:
+            def cursor(self, dictionary=True): return self
+            def execute(self, query, params): pass
+            def fetchone(self): return None
+            def close(self): pass
+
+        class MockConn:
+            def cursor(self, dictionary=True): return MockCursor()
+            def commit(self): pass
             def close(self): pass
 
         return MockConn()
     
-    # Replace original db_connection temporarily with mock_db_connection when called
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
+    response = client.post("/api/auth/register", json={
+        "name": "",
         "email": "",
         "password": ""
     })
 
-    # Pass test if following are matched
     assert response.status_code == 400
     assert response.json["success"] == False
     assert response.json["message"] == "Please fill out all fields!"
 
 
-# Test to make sure forms with no given email do not pass
-def test_login_missing_email(client, monkeypatch):
+# Test to see if register blocks user if NO NAME is provided
+def test_register_no_name(client, monkeypatch):
     def mock_get_db_connection():
-        # Simulate and match procedure of db_connection in app.py
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return {
-                "userID": 1,
-                "email": "user@test.com", 
-                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+            def fetchone(self): return None
             def close(self): pass
 
         class MockConn:
             def cursor(self, dictionary=True): return MockCursor()
+            def commit(self): pass
             def close(self): pass
 
         return MockConn()
     
-    # Replace original db_connection temporarily with mock_db_connection when called
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
-        "email": "",
-        "password": "password123"
+    response = client.post("/api/auth/register", json={
+        "name": "",
+        "email": "validatedEmail@email.com",
+        "password": "Password123!"
     })
 
-    # Pass test if following are matched
     assert response.status_code == 400
     assert response.json["success"] == False
     assert response.json["message"] == "Please fill out all fields!"
 
 
-# Test to make sure forms with no given password do not pass
-def test_login_missing_password(client, monkeypatch):
+# Test to see if register blocks user if NO EMAIL is provided
+def test_register_no_email(client, monkeypatch):
     def mock_get_db_connection():
-        # Simulate and match procedure of db_connection in app.py
         class MockCursor:
             def cursor(self, dictionary=True): return self
             def execute(self, query, params): pass
-            def fetchone(self): return {
-                "userID": 1,
-                "email": "user@test.com", 
-                "password": bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode("utf-8")}
+            def fetchone(self): return None
             def close(self): pass
 
         class MockConn:
             def cursor(self, dictionary=True): return MockCursor()
+            def commit(self): pass
             def close(self): pass
 
         return MockConn()
     
-    # Replace original db_connection temporarily with mock_db_connection when called
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
-        "email": "user@test.com",
+    response = client.post("/api/auth/register", json={
+        "name": "New User",
+        "email": "",
+        "password": "Password123!"
+    })
+
+    assert response.status_code == 400
+    assert response.json["success"] == False
+    assert response.json["message"] == "Please fill out all fields!"
+
+
+# Test to see if register blocks user if NO PASSWORD is provided
+def test_register_no_password(client, monkeypatch):
+    def mock_get_db_connection():
+        class MockCursor:
+            def cursor(self, dictionary=True): return self
+            def execute(self, query, params): pass
+            def fetchone(self): return None
+            def close(self): pass
+
+        class MockConn:
+            def cursor(self, dictionary=True): return MockCursor()
+            def commit(self): pass
+            def close(self): pass
+
+        return MockConn()
+    
+    import app
+    monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
+
+    response = client.post("/api/auth/register", json={
+        "name": "VALID USER",
+        "email": "validatedEmail@email.com",
         "password": ""
     })
 
-    # Pass test if following are matched
     assert response.status_code == 400
     assert response.json["success"] == False
     assert response.json["message"] == "Please fill out all fields!"
