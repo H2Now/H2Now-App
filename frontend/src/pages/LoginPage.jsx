@@ -46,7 +46,7 @@ function LoginPage() {
                 setError(data.message || "Something went wrong.. Please try again!");
             } else {
                 console.log("Login successfully!");
-                setTimeout(() => navigate("/"), 1000)
+                setTimeout(() => navigate("/hub"), 1000)
             }
         } catch (error) {
             alert("Something went wrong.. Please try again!");
