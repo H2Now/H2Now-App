@@ -143,5 +143,80 @@ def check_session():
     return jsonify({"logged_in": False}), 200
 
 
+# Get current user profile
+@app.route("/api/user", methods=["GET"])
+def get_user():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+
+    user_id = session["user_id"]
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT userID, name, email FROM User WHERE userID=%s", (user_id,))
+        user = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    return jsonify({"success": True, "user": {"id": user["userID"], "name": user["name"], "email": user["email"]}}), 200
+
+
+# Update current user (name and/or password)
+@app.route("/api/user", methods=["PUT"])
+def update_user():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+
+    data = request.get_json(silent=True) or {}
+    new_name = data.get("name")
+    new_password = data.get("password")
+
+    user_id = session["user_id"]
+
+    if not new_name and not new_password:
+        return jsonify({"success": False, "message": "Nothing to update"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # If changing name, ensure not already taken by another user
+        if new_name:
+            cursor.execute("SELECT userID FROM User WHERE name=%s AND userID<>%s", (new_name, user_id))
+            if cursor.fetchone():
+                return jsonify({"success": False, "message": "Name already in use"}), 400
+
+        # If changing password, validate strength
+        if new_password:
+            password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,32}$"
+            if not re.match(password_regex, new_password):
+                return jsonify({"success": False, "message": "Password does not meet requirements"}), 400
+
+        # Build update query
+        updates = []
+        params = []
+        if new_name:
+            updates.append("name=%s")
+            params.append(new_name)
+        if new_password:
+            hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            updates.append("password=%s")
+            params.append(hashed)
+
+        params.append(user_id)
+        query = f"UPDATE User SET {', '.join(updates)} WHERE userID=%s"
+        cursor.execute(query, tuple(params))
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"success": True, "message": "Profile updated"}), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
