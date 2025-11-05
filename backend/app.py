@@ -161,7 +161,7 @@ def get_user():
 
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
-
+    
     return jsonify({"success": True, "user": {"id": user["userID"], "name": user["name"], "email": user["email"]}}), 200
 
 
@@ -216,6 +216,34 @@ def update_user():
         conn.close()
 
     return jsonify({"success": True, "message": "Profile updated"}), 200
+
+
+# Get user's water bottle
+@app.route("/api/user/water_bottle", methods=["GET"])
+def get_water_bottle():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+
+    user_id = session["user_id"]
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT bottleName FROM Bottle WHERE userID=%s", (user_id,))
+        bottle_name = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+    
+    if not bottle_name:
+        return jsonify({"success" : False, "message": "Bottle not found"}), 404
+    
+    return jsonify({"success" : True, "bottleName": bottle_name["bottleName"]}), 200
+
+
+# # Add water intake to user's water bottle 
+# @app.route("/api/user/water_bottle", methods=["POST"])
+# def add_water_intake():
+
 
 
 if __name__ == "__main__":
