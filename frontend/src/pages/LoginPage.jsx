@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
 function LoginPage() {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ function LoginPage() {
         setError(null)
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:5000/api/auth/login", {
+            const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
