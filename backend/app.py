@@ -240,11 +240,44 @@ def get_water_bottle():
     return jsonify({"success" : True, "bottleName": bottle_name["bottleName"]}), 200
 
 
-# # Add water intake to user's water bottle 
-# @app.route("/api/user/water_bottle", methods=["POST"])
-# def add_water_intake():
+# Get user's goal and today's intake
+@app.route("/api/user/water_bottle/intake/today", methods=["GET"])
+def get_today_intake():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+        
+    user_id = session["user_id"]
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        # left join ensures if there is no intake today, goal value is still retrieved
+        cursor.execute("""
+            SELECT 
+                COALESCE(i.totalIntake, 0) AS totalIntake,
+                b.goal AS goal
+            FROM Bottle b
+            LEFT JOIN Intake i 
+                ON b.bottleID = i.bottleID 
+                AND i.intakeDate = CURDATE()
+            WHERE b.userID = %s
+        """, (user_id,))
+        result = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+    if not result:
+        return jsonify({"success": False, "message": "Error getting intake and goal"}), 404
+    
+    return jsonify({"success": True, "totalIntake": float(result["totalIntake"]), "goal": float(result["goal"])}), 200
 
 
+
+
+
+
+# Add water intake and update totalIntake to user's water bottle (waiting on working hardware)
+# Disconnect water bottle (waiting on working hardware)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
