@@ -43,6 +43,9 @@ def get_db_connection():
 def register():
     data = request.get_json(silent=True)
 
+    if data is None:
+        return jsonify({"success": False, "message": "Invalid JSON"}), 400
+
     name = data.get("name")
     email = data.get("email")
     password = data.get("password")
@@ -272,7 +275,102 @@ def get_today_intake():
     return jsonify({"success": True, "totalIntake": float(result["totalIntake"]), "goal": float(result["goal"])}), 200
 
 
+# Reset user's intake for today
+@app.route("/api/user/water_bottle/intake/reset", methods=["POST"])
+def reset_water_intake():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+        
+    user_id = session["user_id"]
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            UPDATE Intake
+            SET totalIntake = 0, goalReached = FALSE
+            WHERE userID = %s
+                AND intakeDate = CURDATE();
+            """,
+            (user_id,)
+        )
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
 
+    return jsonify({"success": True, "message": "Today's water intake has been reset."}), 200
+
+
+# Make edits to bottle name, bottle capacity, and daily goal
+@app.route("/api/user/water_bottle/settings", methods=["PATCH"])
+def update_user_settings():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+        
+    user_id = session["user_id"]
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({"success": False, "message": "Invalid JSON"}), 400
+    
+    bottle_name = data.get("bottleName")
+    capacity = data.get("capacity")
+    goal = data.get("goal")
+
+    updates = []
+    params = []
+
+    if bottle_name is not None:
+        bottle_name = bottle_name.strip()
+        if bottle_name == "":
+            return jsonify({"success": False, "message": "Bottle name cannot be empty."}), 400
+        
+        params.append(bottle_name)
+        updates.append("bottleName = %s")
+
+    if capacity is not None:
+        try:
+            capacity = float(capacity)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "Capacity must be a number."}), 400
+        
+        if capacity <= 0:
+            return jsonify({"success": False, "message": "Capacity must be greater than 0."}), 400
+    
+        updates.append("capacity = %s")
+        params.append(capacity)
+
+    if goal is not None:
+        try:
+            goal = float(goal)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "Goal must be a number."}), 400
+        
+        if goal <= 0:
+            return jsonify({"success": False, "message": "Goal must be greater than 0."}), 400
+        
+        updates.append("goal = %s")
+        params.append(goal)
+    
+    if not updates:
+        return jsonify({"success": False, "message": "No fields to update."}), 400
+    
+    params.append(user_id)
+
+    # f-string allows .join to be executed first before being part of the string
+    query = f"UPDATE Bottle SET {', '.join(updates)} WHERE userID = %s"
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"success": True, "message": "Bottle settings have been updated successfully."}), 200
 
 
 
