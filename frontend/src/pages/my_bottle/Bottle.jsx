@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 
-export default function Bottle() {
+export default function Bottle({ onConnectionChange }) {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
     const [connectedBottle, setConnectedBottle] = useState(false)
@@ -46,6 +46,13 @@ export default function Bottle() {
         }
         fetchTodayIntake()
     }, [])
+
+    // Notify parent component when bottle connection state changes
+    useEffect(() => {
+        if (onConnectionChange) {
+            onConnectionChange(connectedBottle)
+        }
+    }, [connectedBottle, onConnectionChange])
 
     const handleConnectBottle = async () => {
         setError(null)
