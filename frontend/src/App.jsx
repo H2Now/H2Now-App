@@ -2,6 +2,8 @@ import { Route, Routes, useLocation } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Hub from "./pages/hub_pages/Hub"
 import MyBottle from "./pages/my_bottle/Page"
+import Account from "./pages/hub_pages/Account"
+import Settings from "./pages/hub_pages/Settings"
 import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
@@ -21,11 +23,11 @@ function App() {
 				<Route element={<PublicRoute />}>
 					<Route path="/login" element={<LoginPage />}></Route>
 					<Route path="/register" element={<RegisterPage />}></Route>
-				</Route>
-				<Route>
+				</Route>	
+				<Route element={<ProtectedRoute />}>
 					<Route path="/hub" element={<Hub />}></Route>
-				</Route>
-				<Route>
+					<Route path="/hub/account" element={<Account />}></Route>
+					<Route path="/hub/settings" element={<Settings />}></Route>
 					<Route path="/my-bottle" element={<MyBottle />}></Route>
 				</Route>
 			</Routes>
