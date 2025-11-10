@@ -5,7 +5,7 @@ import Statistics from "../assets/icons/trend.png"
 
 export default function MobileNavbar({ page, activePage, setActivePage }) {
     return (
-        <nav className="w-full h-[100px] bg-white/90 dark:bg-slate-900/85 rounded-t-2xl flex items-center justify-evenly block sm:hidden shadow-inner border-t-2 border-blue-400/12 dark:border-slate-700/30">
+        <nav className="fixed bottom-0 left-0 right-0 w-full h-[100px] bg-white/90 dark:bg-slate-900/85 backdrop-blur-sm rounded-t-2xl flex items-center justify-evenly sm:hidden shadow-inner border-t-2 border-blue-400/12 dark:border-slate-700/30 z-40">
             <button 
                 onClick={() => setActivePage("account")}
                 aria-label="Account" 
