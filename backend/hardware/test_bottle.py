@@ -1,13 +1,13 @@
 # For PI only to run
-from hardware.bottle import BottleMonitor
+from bottle import BottleHardware
 import time
 
-monitor = BottleMonitor()
+monitor = BottleHardware()
 monitor.start()
 
 try:
     while True:
-        print("Drinking:", monitor.drinking, "Picked:", monitor.bottle_picked)
-        time.sleep(2)
+        time.sleep(1)
 except KeyboardInterrupt:
     monitor.stop()
+
