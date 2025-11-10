@@ -2,14 +2,12 @@ import smbus
 import time
 import math
 import RPi.GPIO as GPIO
-from threading import Thread
-
-# PLEASE KNOW THAT SMBUS CANNOT BE INSTALLED WITHOUT A LINUX ENVIRONMENT.
-# MAC WILL NOT RUN THIS — ONLY PI AND LAPTOPS WITH LINUX.
+from threading import Thread, Lock
+from queue import Queue
 
 class BottleHardware:
     def __init__(self):
-        # Buzzer setup 
+        # Buzzer setup
         self.BUZZER_PIN = 18
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.BUZZER_PIN, GPIO.OUT)
@@ -48,8 +46,12 @@ class BottleHardware:
         self.last_motion_time = time.time()
         self.placed_candidate_time = None
         self.placed_time = None
+
+        # Threading
         self.running = False
         self.thread = None
+        self.events_queue = Queue()
+        self.lock = Lock()
 
     def read_raw_accel(self, addr):
         high = self.bus.read_byte_data(self.Device_Address, addr)
@@ -74,12 +76,13 @@ class BottleHardware:
         time.sleep(2)
         self.buzzer_pwm.stop()
 
-    def bottle_monitor(self):
+    def _monitor_loop(self):
         try:
             while self.running:
                 ax, ay, az = self.read_accel()
                 pitch = self.tilt_angles(ax, ay, az)
                 now = time.time()
+                events = []
 
                 accel_change = (
                     abs(ax - self.prev_ax) > self.ACCEL_THRESHOLD or
@@ -95,7 +98,7 @@ class BottleHardware:
                     self.placed_time = None
                     if not self.bottle_picked:
                         self.bottle_picked = True
-                        print("Bottle is picked up")
+                        events.append("Bottle is picked up")
 
                 # Check for placement
                 if (self.bottle_picked and
@@ -110,7 +113,7 @@ class BottleHardware:
                         self.drink_start_time = None
                         self.placed_candidate_time = None
                         self.placed_time = now
-                        print("Bottle is placed down")
+                        events.append("Bottle is placed down")
                 else:
                     self.placed_candidate_time = None
 
@@ -122,43 +125,50 @@ class BottleHardware:
                                 self.drink_start_time = now
                             elif now - self.drink_start_time >= self.DRINK_HOLD_TIME:
                                 self.drinking = True
-                                print("Drinking detected!")
+                                events.append("Drinking detected!")
                     else:
                         self.drink_start_time = None
                         if self.drinking:
                             self.drinking = False
-                            print("Stopped drinking")
+                            events.append("Stopped drinking")
 
                 # Inactivity alert
                 if self.placed_time and (now - self.placed_time) >= self.INACTIVE_TIME:
-                    print("Please drink your water!")
+                    events.append("Please drink your water!")
                     self.buzzer_alert()
                     self.placed_time = now
 
                 # Update previous readings
                 self.prev_ax, self.prev_ay, self.prev_az = ax, ay, az
                 self.prev_pitch = pitch
+
+                # Add events to queue
+                for e in events:
+                    with self.lock:
+                        self.events_queue.put(e)
+
                 time.sleep(0.1)
 
         except KeyboardInterrupt:
             pass
         finally:
-            self.buzzer_pwm.stop()
-            GPIO.cleanup()
+            self.cleanup()
 
     def start(self):
         if not self.running:
             self.running = True
-            self.thread = Thread(target=self.bottle_monitor, daemon=True)
+            self.thread = Thread(target=self._monitor_loop, daemon=True)
             self.thread.start()
-            print("Bottle monitoring started.")
 
-    def stop(self):
-        if self.running:
-            self.running = False
-            if self.thread:
-                self.thread.join()
-            self.buzzer_pwm.stop()
-            GPIO.cleanup()
-            print("Bottle monitoring stopped.")
+    def get_events(self):
+        events = []
+        while not self.events_queue.empty():
+            with self.lock:
+                events.append(self.events_queue.get())
+        return events
+
+    def cleanup(self):
+        self.buzzer_pwm.stop()
+        GPIO.cleanup()
+        self.running = False
 
