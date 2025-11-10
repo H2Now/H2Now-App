@@ -6,14 +6,17 @@ import BottleSettings from "../my_bottle/BottleSettings"
 export default function MyBottle() {
     // Mini navbar state for content sections
     const [activeSection, setActiveSection] = useState("intake")
+    // Bottle connection state
+    const [isBottleConnected, setIsBottleConnected] = useState(false)
 
     return (
         <div className="w-full flex flex-col items-center justify-center gap-8 min-h-[500px]">
             {/* Goal Overview and Bottle Visualization */}
-            <Bottle />
+            <Bottle onConnectionChange={setIsBottleConnected} />
 
-            {/* Mini Navbar */}
-            <div className="w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-2">
+            {/* Mini Navbar - Only show when bottle is connected */}
+            {isBottleConnected && (
+                <div className="w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-2">
                 <div className="flex items-center justify-between gap-2">
                     <button
                         onClick={() => setActiveSection("intake")}
@@ -47,9 +50,11 @@ export default function MyBottle() {
                     </button>
                 </div>
             </div>
+            )}
 
-            {/* Dynamic Content Box */}
-            <div className="w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6">
+            {/* Dynamic Content Box - Only show when bottle is connected */}
+            {isBottleConnected && (
+                <div className="w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6">
                 {activeSection === "settings" ? (
                     <BottleSettings />
                 ) : (
@@ -63,6 +68,7 @@ export default function MyBottle() {
                     </>
                 )}
             </div>
+            )}
         </div>
     )
 }
