@@ -1,5 +1,6 @@
 import { useState } from "react"
 import Bottle from "../my_bottle/Bottle"
+import BottleSettings from "../my_bottle/BottleSettings"
 
 
 export default function MyBottle() {
@@ -49,12 +50,18 @@ export default function MyBottle() {
 
             {/* Dynamic Content Box */}
             <div className="w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6">
-                <h4 className="text-[18px] font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
-                    {activeSection}
-                </h4>
-                <div className="text-gray-600 dark:text-gray-400 text-center py-8">
-                    Content goes here
-                </div>
+                {activeSection === "settings" ? (
+                    <BottleSettings />
+                ) : (
+                    <>
+                        <h4 className="text-[18px] font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
+                            {activeSection}
+                        </h4>
+                        <div className="text-gray-600 dark:text-gray-400 text-center py-8">
+                            Content goes here
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     )
