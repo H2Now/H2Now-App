@@ -28,6 +28,14 @@ print(f"Publishing to channel: {channel}")
 pubnub.subscribe().channels([channel]).with_presence().execute()
 print(f"✅ {BOTTLE_ID} subscribed with presence (heartbeat: {pnconfig.heartbeat_interval}s)")
 
+EVENT_MAPPING = {
+    "Bottle is picked up": "bottle_picked",
+    "Drinking detected!": "drinking_start",
+    "Stopped drinking": "drinking_end",
+    "Bottle is placed down": "bottle_placed",
+    "Please drink your water!": "reminder_alert"
+}
+
 # Initialize and start bottle monitoring
 monitor = BottleHardware()
 monitor.start()  # starts the _monitor_loop in a background thread
@@ -37,7 +45,7 @@ try:
         # Fetch any new events from the bottle hardware
         events = monitor.get_events()
         for e in events:
-            event_type = "bottle_event"
+            event_type = EVENT_MAPPING.get(e, "bottle_event")
             print("Detected event:", e)  # For debugging
             # Publish to PubNub
             pubnub.publish().channel(channel).message({
