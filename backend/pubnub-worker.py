@@ -4,6 +4,7 @@ from pubnub.pubnub import PubNub
 from dotenv import load_dotenv
 import os
 import time
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -12,7 +13,9 @@ load_dotenv()
 pnconfig = PNConfiguration()
 pnconfig.publish_key = os.getenv("PUBLISH_KEY")
 pnconfig.subscribe_key = os.getenv("SUBSCRIBE_KEY")
-pnconfig.uuid = os.getenv("PUBNUB_UUID")
+BOTTLE_ID = os.getenv("BOTTLE_ID")
+pnconfig.uuid = BOTTLE_ID
+pnconfig.heartbeat_interval = 15
 
 pubnub = PubNub(pnconfig)
 channel = os.getenv("PUBNUB_CHANNEL")
@@ -20,6 +23,10 @@ channel = os.getenv("PUBNUB_CHANNEL")
 if not channel:
     raise ValueError("PUBNUB_CHANNEL not set in .env")
 print(f"Publishing to channel: {channel}")
+
+# Subscribe with presence enabled
+pubnub.subscribe().channels([channel]).with_presence().execute()
+print(f"✅ {BOTTLE_ID} subscribed with presence (heartbeat: {pnconfig.heartbeat_interval}s)")
 
 # Initialize and start bottle monitoring
 monitor = BottleHardware()
@@ -30,9 +37,15 @@ try:
         # Fetch any new events from the bottle hardware
         events = monitor.get_events()
         for e in events:
+            event_type = "bottle_event"
             print("Detected event:", e)  # For debugging
             # Publish to PubNub
-            pubnub.publish().channel(channel).message({"event": e}).sync()
+            pubnub.publish().channel(channel).message({
+                "type": event_type,
+                "event": e,
+                "bottleID": BOTTLE_ID,
+                "timestamp": datetime.now().isoformat()
+            }).sync()
         time.sleep(0.1)
 
 except KeyboardInterrupt:
@@ -40,4 +53,5 @@ except KeyboardInterrupt:
 
 finally:
     monitor.cleanup()
+    pubnub.unsubscribe_all()
 
