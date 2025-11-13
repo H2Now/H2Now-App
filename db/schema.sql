@@ -60,7 +60,7 @@ CREATE TABLE Intake (
     totalIntake DECIMAL(6,2) NOT NULL,
     goalReached BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE,
-    FOREIGN KEY (bottleID) REFERENCES Bottle(bottleID) ON DELETE CASCADE
+    FOREIGN KEY (bottleID) REFERENCES Bottle(bottleID) ON DELETE CASCADE,
     UNIQUE KEY unique_daily_intake (userID, bottleID, intakeDate)
 );
 
