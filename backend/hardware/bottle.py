@@ -171,4 +171,3 @@ class BottleHardware:
         self.buzzer_pwm.stop()
         GPIO.cleanup()
         self.running = False
-
