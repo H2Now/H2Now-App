@@ -2,27 +2,6 @@
 import { motion } from 'framer-motion'
 
 function HomePage() {
-    // const [error, setError] = useState(null);
-    // const [loading, setLoading] = useState(false);
-    // const [message, setMessage] = useState('');
-
-    // useEffect(() => {
-    //     fetchData();
-    // }, [])
-
-    // const fetchData = async () => {
-    //     setLoading(true);
-    //     try {
-    //         const res = await fetch("http://localhost:5000/api/test");
-    //         const data = await res.json();
-    //         setMessage(data.message);
-    //     } catch (err) {
-    //         setError(err);
-    //         console.error("Error fetching data.. ", err);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }
     return (
         <>
             <div
