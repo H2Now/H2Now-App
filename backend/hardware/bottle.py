@@ -24,6 +24,7 @@ class BottleHardware:
             while self.running:
                 ax, ay, az = self.mpu6050.read_accel()
                 pitch = self.mpu6050.tilt_angles(ax, ay, az)
+                weight = self.load_cell.read_weight()
                 now = time.time()
                 events = [] # Events are appended here to send to PubNub 
 
@@ -31,8 +32,20 @@ class BottleHardware:
                 self.mpu6050.update_readings(ax, ay, az, pitch)
 
                 # Movement detection
-                if self.mpu6050.detect_movement(ax, ay, az):
+                if self.mpu6050.detect_movement(ax, ay, az, now):
                     events.append("Bottle has been picked up!")
+
+
+                # Bottle has been placed down detection
+                if self.mpu6050.detect_bottle_placement(now):
+                    prev_weight = self.load_cell.prev_weight
+                    changed_weight = self.load_cell.detect_weight_change(weight)
+                    water_drank = weight - prev_weight
+
+                    if changed_weight is True:
+                        events.append(f"{water_drank} ml of water was consumed")
+                    elif changed_weight is False: 
+                        events.append("No water was drunk!")
 
 
                 # Drinking detection
@@ -48,10 +61,12 @@ class BottleHardware:
                     events.append("Please drink your water!")
                     self.buzzer.trigger_buzzer()
 
+
                 # Add events to queue
                 for e in events:
                     with self.lock:
                         self.events_queue.put(e)
+
 
                 time.sleep(0.1)
 

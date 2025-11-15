@@ -33,6 +33,7 @@ class MPU6050:
         self.bottle_picked = False
         self.placed_bottle_timestamp = None # When bottle was confirmed placed
         self.start_drink_timestamp = None # WHen user first started to drink
+        self.prev_movement_timestamp = None # When user last moved bottle
 
 
     # Read in accel from MPU (raw)
@@ -67,7 +68,7 @@ class MPU6050:
     
 
     # Detect any acceleration change
-    def detect_movement(self, ax, ay, az):
+    def detect_movement(self, ax, ay, az, now):
         accel_change = (
             abs(ax - self.prev_ax) > self.ACCEL_THRESHOLD or
             abs(ay - self.prev_ay) > self.ACCEL_THRESHOLD or
@@ -76,6 +77,7 @@ class MPU6050:
 
         if accel_change:
             self.placed_bottle_timestamp = None
+            self.prev_movement_timestamp = now
             if not self.bottle_picked:
                 self.bottle_picked = True
                 print("Detected movement! Assuming user is picking up bottle.")
@@ -85,8 +87,8 @@ class MPU6050:
     
 
     # Determine whether bottle was placed down for certain time
-    def detect_bottle_placement(self, curr_time, last_movement_time):
-        if self.bottle_picked and curr_time - last_movement_time > self.STILL_TIME:
+    def detect_bottle_placement(self, curr_time):
+        if self.bottle_picked and curr_time - self.prev_movement_timestamp > self.STILL_TIME:
             if self.placed_bottle_timestamp is None:
                 self.placed_bottle_timestamp = curr_time
 
