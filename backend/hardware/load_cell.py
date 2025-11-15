@@ -4,8 +4,8 @@ from hx711 import HX711
 class LoadCell:
     def __init__(self):
         # GPIO Pins
-        self.DT_PIN = 5
-        self.SCK_PIN = 6
+        self.DT_PIN = 17
+        self.SCK_PIN = 27
         self.hx = HX711(self.DT_PIN, self.SCK_PIN)
 
         # Weight calibration, used 500g
