@@ -4,7 +4,7 @@ import time
 class PiezoBuzzer():
     def __init__(self):
         # Buzzer setup 
-        self.BUZZER_PIN = 18
+        self.BUZZER_PIN = 13
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.BUZZER_PIN, GPIO.OUT)
         self.buzzer_pwm = GPIO.PWM(self.BUZZER_PIN, 4000) # 4000Hz 
