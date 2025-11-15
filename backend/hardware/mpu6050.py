@@ -16,7 +16,7 @@ class MPU6050:
         self.bus.write_byte_data(self.Device_Address, self.PWR_MGMT_1, 0)
 
         # Thresholds
-        self.ACCEL_THRESHOLD = 0.5   
+        self.ACCEL_THRESHOLD = 0.2 
         self.TILT_THRESHOLD = 5     
         self.DRINK_ANGLE_MIN = 20    
         self.DRINK_ANGLE_MAX = 80    
@@ -27,13 +27,14 @@ class MPU6050:
         self.PLACED_CONFIRM = 1.0  
 
         # State variables
-        self.prev_ax, self.prev_ay, self.prev_az = self.read_accel()
-        self.prev_pitch = self.tilt_angles(self.prev_ax, self.prev_ay, self.prev_az)
+        self.prev_ax, self.prev_ay, self.prev_az = 0, 0, 0
+        self.prev_pitch = 0
         self.drinking = False
         self.bottle_picked = False
-        self.placed_bottle_timestamp = None # When bottle was confirmed placed
-        self.start_drink_timestamp = None # WHen user first started to drink
-        self.prev_movement_timestamp = None # When user last moved bottle
+        self.placed_bottle_timestamp = time.time() # When bottle was confirmed placed
+        self.start_drink_timestamp = time.time() # WHen user first started to drink
+        self.stop_drink_timestamp = None # When it seems like user has stopped drinking
+        self.prev_movement_timestamp = time.time() # When user last moved bottle
 
 
     # Read in accel from MPU (raw)
@@ -75,20 +76,19 @@ class MPU6050:
             abs(az - self.prev_az) > self.ACCEL_THRESHOLD
         )
 
-        if accel_change:
+        if not self.bottle_picked and accel_change:
             self.placed_bottle_timestamp = None
             self.prev_movement_timestamp = now
-            if not self.bottle_picked:
-                self.bottle_picked = True
-                print("Detected movement! Assuming user is picking up bottle.")
-                return True
+            self.bottle_picked = True
+            print("Bottle is picked up")
+            return True
 
         return None
     
 
     # Determine whether bottle was placed down for certain time
-    def detect_bottle_placement(self, curr_time):
-        if self.bottle_picked and curr_time - self.prev_movement_timestamp > self.STILL_TIME:
+    def detect_bottle_placement(self, curr_time, pitch):
+        if self.bottle_picked and curr_time - self.prev_movement_timestamp > self.STILL_TIME and abs(pitch) < self.DRINK_ANGLE_MIN:
             if self.placed_bottle_timestamp is None:
                 self.placed_bottle_timestamp = curr_time
 
@@ -105,7 +105,9 @@ class MPU6050:
     # Determine whether the user is drinking (True) from the bottle or stopped (False)
     def detect_drinking(self, pitch, now):
         if self.bottle_picked:
-            if (self.DRINK_ANGLE_MIN <= abs(pitch) <= self.DRINK_ANGLE_MAX) and not self.drinking:
+            if (self.DRINK_ANGLE_MIN <= abs(pitch) <= self.DRINK_ANGLE_MAX):
+                self.stop_drink_timestamp = None
+
                 if self.start_drink_timestamp is None:
                     self.start_drink_timestamp = now
                 elif now - self.start_drink_timestamp >= self.DRINK_HOLD_TIME:
@@ -114,7 +116,10 @@ class MPU6050:
                     return True
             else:
                 self.start_drink_timestamp = None
-                if self.drinking:
+
+                if self.stop_drink_timestamp is None:
+                    self.stop_drink_timestamp = now
+                if self.drinking and now - self.stop_drink_timestamp >= self.STILL_TIME:
                     self.drinking = False
                     print("Stopped drinking")
                     return False
