@@ -44,6 +44,7 @@ class LoadCell:
 
         if curr_weight < self.prev_weight and weight_diff >= self.WEIGHT_CHANGE_THRESHOLD:
             print(weight_diff, "ml of water was drunk!")
+            self.prev_weight = curr_weight
             return True
         else:
             print("No water was drunk!")
