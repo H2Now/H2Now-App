@@ -37,7 +37,7 @@ try:
         # Fetch any new events from the bottle hardware
         events = monitor.get_events()
         for e in events:
-            if e.startsWith("bottle_placed|"):
+            if e.startswith("bottle_placed|"):
                 parts = e.split("|")
                 event_type = "bottle_placed"
                 actual_intake = int(parts[1])
