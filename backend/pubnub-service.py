@@ -134,20 +134,24 @@ class BottleEventListener(SubscribeCallback):
         
         # Use actual intake from load cell
         if actual_intake is not None and actual_intake > 0:
-            recorded_intake = actual_intake
+            cursor.execute(
+                "UPDATE DrinkingSession SET endTime = NOW(), duration = %s, estimatedIntake = %s WHERE sessionID = %s",
+                (duration, actual_intake, session_info["session_id"])
+            )
+            conn.commit()
+            print(f"Recorded session: {actual_intake}ml in {duration}s")
         else:
-            recorded_intake = 0
-
-        cursor.execute(
-            "UPDATE DrinkingSession SET endTime = NOW(), duration = %s, estimatedIntake = %s WHERE sessionID = %s",
-            (duration, recorded_intake, session_info["session_id"])
-        )
-        conn.commit()
+            # No water consumed, delete the session
+            cursor.execute(
+                "DELETE FROM DrinkingSession WHERE sessionID = %s",
+                (session_info["session_id"],)
+            )
+            conn.commit()
 
         # Remove from active sessions
         del active_sessions[bottle_id]
         
-        return recorded_intake
+        return actual_intake if actual_intake and actual_intake > 0 else 0
     
     def _update_daily_intake(self, bottle_id, user_id, intake_amount, cursor, conn):
         # if no record exists for today, create one else just update the intake amount
