@@ -58,13 +58,13 @@ class BottleHardware:
                         else:
                             print("Bottle is placed down, no significcant water consumed")
                             events.append("bottle_placed|0")
-                else:
-                    print("Bottle is placed down, no pickup weight was recorded!")
-                    events.append("bottle_placed|0")
+                    else:
+                        print("Bottle is placed down, no pickup weight was recorded!")
+                        events.append("bottle_placed|0")
 
-                # Reset pickup weight for next drinking session
-                self.pickup_weight = None
-                self.load_cell.prev_weight = placement_weight
+                    # Reset pickup weight for next drinking session
+                    self.pickup_weight = None
+                    self.load_cell.prev_weight = placement_weight
 
                 # Drinking detection
                 is_drinking = self.mpu6050.detect_drinking(pitch, now)
