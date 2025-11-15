@@ -23,6 +23,9 @@ class BottleHardware:
         self.events_queue = Queue()
         self.lock = Lock()
 
+        # Track weight when bottle is picked up
+        self.pickup_weight = None
+
 
     def _monitor_loop(self):
         try:
@@ -34,36 +37,44 @@ class BottleHardware:
                 now = time.time()
                 events = [] # Events are appended here to send to PubNub 
 
-                # Movement detection
+                # Movement detection - Record weight at pickup
                 if self.mpu6050.detect_movement(ax, ay, az, now):
-                    events.append("Bottle has been picked up!")
+                    self.pickup_weight = weight
+                    print(f"Bottle is picked up, weight: {weight}ml")
+                    events.append("bottle_picked")
 
-
-                # Bottle has been placed down detection
+                # Bottle has been placed down detection - Calculate intake
                 if self.mpu6050.detect_bottle_placement(now, pitch):
-                    prev_weight = self.load_cell.prev_weight
-                    changed_weight = self.load_cell.detect_weight_change(weight)
-                    water_drank = weight - prev_weight
+                    placement_weight = weight
 
-                    if changed_weight is True:
-                        water_drank = int(round(water_drank))
-                        events.append(f"{water_drank} ml of water was consumed")
-                    elif changed_weight is False: 
-                        events.append("No water was drunk!")
+                    # Calculate water intake
+                    if self.pickup_weight is not None:
+                        actual_intake = self.pickup_weight - placement_weight
+                        # Only record if more than 5ml was consumed
+                        if actual_intake >= 5:
+                            actual_intake = int(round(actual_intake))
+                            print(f"Bottle is placed down, consumed: {actual_intake}ml")
+                            events.append(f"bottle_placed|{actual_intake}")
+                        else:
+                            print("Bottle is placed down, no significcant water consumed")
+                            events.append("bottle_placed|0")
+                else:
+                    print("Bottle is placed down, no pickup weight was recorded!")
+                    events.append("bottle_placed|0")
 
-                    self.load_cell.prev_weight = weight
-
+                # Reset pickup weight for next drinking session
+                self.pickup_weight = None
+                self.load_cell.prev_weight = placement_weight
 
                 # Drinking detection
                 is_drinking = self.mpu6050.detect_drinking(pitch, now)
                 if is_drinking is True:
-                    events.append("Drinking has started")
+                    events.append("drinking_start")
 
                 # Inactivity alert
                 if self.mpu6050.detect_inactivity(now):
-                    events.append("Please drink your water!")
+                    events.append("reminder_alert")
                     self.buzzer.trigger_buzzer()
-
 
                 # Add events to queue
                 for e in events:

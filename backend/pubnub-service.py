@@ -72,8 +72,13 @@ class BottleEventListener(SubscribeCallback):
         if not isinstance(message_data, dict):
             return
         
-        event_type = message_data.get("type", "bottle_event")
+        event_type = message_data.get("type")
         bottle_id = message_data.get("bottleID")
+        actual_intake = message_data.get("actual_intake")
+
+        if not bottle_id:
+            print("Missing bottleID...")
+            return
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -86,6 +91,7 @@ class BottleEventListener(SubscribeCallback):
             bottle_info = cursor.fetchone()
 
             if not bottle_info:
+                print(f"Bottle {bottle_id} not found in database.")
                 return
 
             user_id = bottle_info["userID"]
@@ -93,9 +99,9 @@ class BottleEventListener(SubscribeCallback):
 
             if event_type == "drinking_start":
                 self._start_drinking_session(bottle_id, cursor, conn)
-            elif event_type in ["drinking_end", "bottle_placed"]:
-                intake = self._end_drinking_session(bottle_id, cursor, conn)
-                if intake:
+            elif event_type == "bottle_placed":
+                intake = self._end_drinking_session(bottle_id, cursor, conn, actual_intake)
+                if intake and intake > 0:
                     self._update_daily_intake(bottle_id, user_id, intake, cursor, conn)
         finally:
             cursor.close()
@@ -115,27 +121,33 @@ class BottleEventListener(SubscribeCallback):
                 "start_time": datetime.now()
             }
 
-    def _end_drinking_session(self, bottle_id, cursor, conn):
+    def _end_drinking_session(self, bottle_id, cursor, conn, actual_intake=None):
         # if bottle is not in active session, unable to end it
         if bottle_id not in active_sessions:
+            print("No active session to end...")
             return None
         
         session_info = active_sessions[bottle_id]
 
-        # Hardcoded to temporarily record estimated intake
+        # get the time difference between drinking start till drinking end
         duration = int((datetime.now() - session_info["start_time"]).total_seconds())
-        estimated_intake = min(duration * 50, 500)
         
+        # Use actual intake from load cell
+        if actual_intake is not None and actual_intake > 0:
+            recorded_intake = actual_intake
+        else:
+            recorded_intake = 0
+
         cursor.execute(
             "UPDATE DrinkingSession SET endTime = NOW(), duration = %s, estimatedIntake = %s WHERE sessionID = %s",
-            (duration, estimated_intake, session_info["session_id"])
+            (duration, recorded_intake, session_info["session_id"])
         )
         conn.commit()
 
-        # remove from session once it's completed
+        # Remove from active sessions
         del active_sessions[bottle_id]
-
-        return estimated_intake
+        
+        return recorded_intake
     
     def _update_daily_intake(self, bottle_id, user_id, intake_amount, cursor, conn):
         # if no record exists for today, create one else just update the intake amount
