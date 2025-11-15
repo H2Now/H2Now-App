@@ -15,6 +15,6 @@ class PiezoBuzzer():
     
     # Trigger buzzer
     def trigger_buzzer(self):
-        self.buzzer_pwm.start()
+        self.buzzer_pwm.start(50)
         time.sleep(3)
         self.buzzer_pwm.stop()
