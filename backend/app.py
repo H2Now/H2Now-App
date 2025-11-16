@@ -243,36 +243,45 @@ def get_water_bottle():
     return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"]}), 200
 
 
-# Get user's goal and today's intake
+# Get user's intake for today 
 @app.route("/api/user/water_bottle/intake/today", methods=["GET"])
 def get_today_intake():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
-        
+
     user_id = session["user_id"]
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # left join ensures if there is no intake today, goal value is still retrieved
+        
+        # Get today's intake
         cursor.execute("""
-            SELECT 
-                COALESCE(i.totalIntake, 0) AS totalIntake,
-                b.goal AS goal
-            FROM Bottle b
-            LEFT JOIN Intake i 
-                ON b.bottleID = i.bottleID 
-                AND i.intakeDate = CURDATE()
-            WHERE b.userID = %s
+            SELECT totalIntake FROM Intake
+            WHERE userID = %s AND intakeDate = CURDATE()
         """, (user_id,))
-        result = cursor.fetchone()
+        intake_result = cursor.fetchone()
+        
+        # Get the daily goal from Bottle table
+        cursor.execute("""
+            SELECT goal FROM Bottle
+            WHERE userID = %s
+        """, (user_id,))
+        bottle_result = cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
 
-    if not result:
-        return jsonify({"success": False, "message": "Error getting intake and goal"}), 404
+    # If no row or null value, treat totalIntake as 0.0
+    total_intake = 0.0
+    if intake_result and intake_result.get("totalIntake") is not None:
+        total_intake = float(intake_result["totalIntake"])
     
-    return jsonify({"success": True, "totalIntake": float(result["totalIntake"]), "goal": float(result["goal"])}), 200
+    # Get goal, default to 2000 if bottle not found
+    goal = 2000
+    if bottle_result and bottle_result.get("goal") is not None:
+        goal = float(bottle_result["goal"])
+
+    return jsonify({"success": True, "totalIntake": total_intake, "goal": goal}), 200
 
 
 # Reset user's intake for today

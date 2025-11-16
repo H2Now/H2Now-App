@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 
-export default function BottleSettings() {
+export default function BottleSettings({ onDataChange }) {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     const [action, setAction] = useState("")
     const [inputValue, setInputValue] = useState("")
@@ -117,6 +117,10 @@ export default function BottleSettings() {
                     setCurrentBottleName(inputValue.trim())
                 } else {
                     setCurrentGoal(inputValue)
+                }
+                // Notify parent component to refresh bottle data
+                if (onDataChange) {
+                    onDataChange()
                 }
                 handleCloseModal()
             }
