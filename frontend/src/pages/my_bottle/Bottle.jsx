@@ -66,7 +66,6 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                 })
                 const data = await res.json()
                 if (res.ok && data.success) {
-                    setDailyGoal(data.goal)
                     setCurrentIntake(data.totalIntake)
                 }
             } catch (error) {
@@ -76,6 +75,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
             }
         }
         fetchTodayIntake()
+        fetchBottleData() // Fetch bottle name and goal
     }, [])
 
     // Notify parent component when bottle connection state changes
