@@ -253,35 +253,20 @@ def get_today_intake():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
-        # Get today's intake
         cursor.execute("""
             SELECT totalIntake FROM Intake
             WHERE userID = %s AND intakeDate = CURDATE()
         """, (user_id,))
-        intake_result = cursor.fetchone()
-        
-        # Get the daily goal from Bottle table
-        cursor.execute("""
-            SELECT goal FROM Bottle
-            WHERE userID = %s
-        """, (user_id,))
-        bottle_result = cursor.fetchone()
+        result = cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
 
-    # If no row or null value, treat totalIntake as 0.0
-    total_intake = 0.0
-    if intake_result and intake_result.get("totalIntake") is not None:
-        total_intake = float(intake_result["totalIntake"])
-    
-    # Get goal, default to 2000 if bottle not found
-    goal = 2000
-    if bottle_result and bottle_result.get("goal") is not None:
-        goal = float(bottle_result["goal"])
+    # If no row or null value, treat as 0.0
+    if not result or result.get("totalIntake") is None:
+        return jsonify({"success": True, "totalIntake": 0.0}), 200
 
-    return jsonify({"success": True, "totalIntake": total_intake, "goal": goal}), 200
+    return jsonify({"success": True, "totalIntake": float(result["totalIntake"])}), 200
 
 
 # Reset user's intake for today
