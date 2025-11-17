@@ -37,7 +37,6 @@ def get_db_connection():
         database=DB_NAME
     )
 
-
 # Register endpoint. Creates user and hashes password
 @app.route("/api/auth/register", methods=["POST"])
 def register():
