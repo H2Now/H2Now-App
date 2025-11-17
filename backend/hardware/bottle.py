@@ -57,10 +57,10 @@ class BottleHardware:
                             events.append(f"bottle_placed|{actual_intake}")
                         else:
                             print("Bottle is placed down, no significcant water consumed")
-                            events.append("bottle_placed|0")
+                            events.append("bottle_placed")
                     else:
                         print("Bottle is placed down, no pickup weight was recorded!")
-                        events.append("bottle_placed|0")
+                        events.append("bottle_placed")
 
                     # Reset pickup weight for next drinking session
                     self.pickup_weight = None
