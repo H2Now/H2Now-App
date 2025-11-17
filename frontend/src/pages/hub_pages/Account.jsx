@@ -13,6 +13,7 @@ export default function Account() {
     // which field is being edited: null | 'name' | 'password'
     const [editingField, setEditingField] = useState(null)
     const [form, setForm] = useState({ name: "", password: "", confirmPassword: "" })
+    const [avatar, setAvatar] = useState(null)
     // message: { type: 'error'|'warning'|'success', text: string } or null
     const [message, setMessage] = useState(null)
 
@@ -40,6 +41,12 @@ export default function Account() {
         }
         fetchUser()
     }, [])
+
+    const handleFile = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setAvatar(URL.createObjectURL(file));
+    };
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -74,7 +81,8 @@ export default function Account() {
             {/* Profile card */}
             <div className="w-[293px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex flex-col items-center py-6">
                 <div className="w-24 h-24 bg-gray-200 dark:bg-slate-700 rounded-full flex items-center justify-center cursor-pointer">
-                    <img src={Camera} className="w-12 h-12" />
+                    <label htmlFor="avatarUpload"><img src={avatar === null ? Camera : avatar} className="w-12 h-12 cursor-pointer" /></label>
+                    <input type="file" id="avatarUpload" accept="image/*" className="hidden" onChange={handleFile}/>
                 </div>
                 <p className="mt-4 text-gray-900 dark:text-gray-100 text-[20px] font-semibold">{loading ? 'Loading...' : `Welcome, ${user.name || 'User'}`}</p>
             </div>
