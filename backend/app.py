@@ -37,7 +37,6 @@ def get_db_connection():
         database=DB_NAME
     )
 
-
 # Register endpoint. Creates user and hashes password
 @app.route("/api/auth/register", methods=["POST"])
 def register():
@@ -231,48 +230,42 @@ def get_water_bottle():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT bottleName FROM Bottle WHERE userID=%s", (user_id,))
-        bottle_name = cursor.fetchone()
+        cursor.execute("SELECT bottleName, goal FROM Bottle WHERE userID=%s", (user_id,))
+        bottle = cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
     
-    if not bottle_name:
+    if not bottle:
         return jsonify({"success" : False, "message": "Bottle not found"}), 404
-    
-    return jsonify({"success" : True, "bottleName": bottle_name["bottleName"]}), 200
+
+    return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"]}), 200
 
 
-# Get user's goal and today's intake
+# Get user's intake for today 
 @app.route("/api/user/water_bottle/intake/today", methods=["GET"])
 def get_today_intake():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
-        
+
     user_id = session["user_id"]
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # left join ensures if there is no intake today, goal value is still retrieved
         cursor.execute("""
-            SELECT 
-                COALESCE(i.totalIntake, 0) AS totalIntake,
-                b.goal AS goal
-            FROM Bottle b
-            LEFT JOIN Intake i 
-                ON b.bottleID = i.bottleID 
-                AND i.intakeDate = CURDATE()
-            WHERE b.userID = %s
+            SELECT totalIntake FROM Intake
+            WHERE userID = %s AND intakeDate = CURDATE()
         """, (user_id,))
         result = cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
 
-    if not result:
-        return jsonify({"success": False, "message": "Error getting intake and goal"}), 404
-    
-    return jsonify({"success": True, "totalIntake": float(result["totalIntake"]), "goal": float(result["goal"])}), 200
+    # If no row or null value, treat as 0.0
+    if not result or result.get("totalIntake") is None:
+        return jsonify({"success": True, "totalIntake": 0.0}), 200
+
+    return jsonify({"success": True, "totalIntake": float(result["totalIntake"])}), 200
 
 
 # Reset user's intake for today
