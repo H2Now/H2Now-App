@@ -239,7 +239,7 @@ def get_water_bottle():
     if not bottle:
         return jsonify({"success" : False, "message": "Bottle not found"}), 404
 
-    return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"], "connected": bottle["connected"]}), 200
+    return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"], "connected": bool(bottle["connected"])}), 200
 
 
 # Get user's intake for today 
@@ -365,10 +365,6 @@ def update_user_settings():
 
     return jsonify({"success": True, "message": "Bottle settings have been updated successfully."}), 200
 
-
-
-# Add water intake and update totalIntake to user's water bottle (waiting on working hardware)
-# Disconnect water bottle (waiting on working hardware)
 
 if __name__ == "__main__":
     app.run()
