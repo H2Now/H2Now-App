@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Bottle from "../my_bottle/Bottle"
 import BottleSettings from "../my_bottle/BottleSettings"
+import BottleStatistics from "../my_bottle/BottleActivity"
 
 
 export default function MyBottle() {
@@ -8,11 +9,13 @@ export default function MyBottle() {
     const [activeSection, setActiveSection] = useState("intake")
     // Bottle connection state
     const [isBottleConnected, setIsBottleConnected] = useState(false)
+    // Ref to access Bottle's refresh function
+    const bottleRef = useRef(null)
 
     return (
         <div className="w-full flex flex-col items-center justify-center gap-8 min-h-[500px]">
             {/* Goal Overview and Bottle Visualization */}
-            <Bottle onConnectionChange={setIsBottleConnected} />
+            <Bottle ref={bottleRef} onConnectionChange={setIsBottleConnected} />
 
             {/* Mini Navbar - Only show when bottle is connected */}
             {isBottleConnected && (
@@ -46,7 +49,7 @@ export default function MyBottle() {
                                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:scale-102 active:scale-95"
                         }`}
                     >
-                        Statistics
+                        Activity
                     </button>
                 </div>
             </div>
@@ -54,9 +57,11 @@ export default function MyBottle() {
 
             {/* Dynamic Content Box - Only show when bottle is connected */}
             {isBottleConnected && (
-                <div className="w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6">
+                <div className="w-[340px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6">
                 {activeSection === "settings" ? (
-                    <BottleSettings />
+                    <BottleSettings onDataChange={() => bottleRef.current?.refreshBottleData()} />
+                ) : activeSection === "statistics" ? (
+                    <BottleStatistics />
                 ) : (
                     <>
                         <h4 className="text-[18px] font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
@@ -67,7 +72,7 @@ export default function MyBottle() {
                         </div>
                     </>
                 )}
-            </div>
+                </div>
             )}
         </div>
     )
