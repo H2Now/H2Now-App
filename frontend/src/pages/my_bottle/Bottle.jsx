@@ -5,6 +5,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
     const [connectedBottle, setConnectedBottle] = useState(false)
     const [connecting, setConnecting] = useState(false)
+    const [checkingConnection, setCheckingConnection] = useState(true)
     const [error, setError] = useState(null)
     const [bottleName, setBottleName] = useState("")
     const [showAddBottleModal, setShowAddBottleModal] = useState(false)
@@ -57,8 +58,30 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
         refreshBottleData: fetchBottleData
     }))
 
-    // Fetch today's intake and goal on component mount
+    // Check if bottle exists and auto-connect on component mount
     useEffect(() => {
+        const checkAndConnectBottle = async () => {
+            setCheckingConnection(true)
+            try {
+                const res = await fetch(`${API_URL}/api/user/water_bottle`, {
+                    credentials: "include",
+                })
+                const data = await res.json()
+                
+                if (res.ok && data.success) {
+                    // Bottle exists, auto-connect
+                    setConnectedBottle(true)
+                    setBottleName(data.bottleName || "My H2Now Bottle")
+                    setDailyGoal(data.goal)
+                }
+                // If bottle doesn't exist, stay in disconnected state
+            } catch (error) {
+                console.error("Failed to check bottle connection:", error)
+            } finally {
+                setCheckingConnection(false)
+            }
+        }
+
         const fetchTodayIntake = async () => {
             try {
                 const res = await fetch(`${API_URL}/api/user/water_bottle/intake/today`, {
@@ -74,8 +97,9 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                 setLoadingIntake(false)
             }
         }
+
+        checkAndConnectBottle()
         fetchTodayIntake()
-        fetchBottleData() // Fetch bottle name and goal
     }, [])
 
     // Notify parent component when bottle connection state changes
@@ -247,7 +271,20 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                 {/* Bottle Visualization Section */}
                 <div className="flex flex-col items-center">
-                    {!connectedBottle ? (
+                    {checkingConnection ? (
+                        // Checking Connection State
+                        <div className="flex flex-col items-center gap-6">
+                            <div className="w-[200px] h-[280px] flex items-center justify-center">
+                                <svg className="animate-spin h-12 w-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                            <p className="text-[16px] font-medium text-gray-600 dark:text-gray-300">
+                                Checking connection...
+                            </p>
+                        </div>
+                    ) : !connectedBottle ? (
                         // Not Connected State
                         <div className="flex flex-col items-center gap-6">
                             {/* Bottle Icon (Empty/Disconnected) */}
