@@ -1,7 +1,7 @@
 import { useState, useRef } from "react"
 import Bottle from "../my_bottle/Bottle"
 import BottleSettings from "../my_bottle/BottleSettings"
-import BottleStatistics from "../my_bottle/BottleActivity"
+import BottleActivity from "../my_bottle/BottleActivity"
 
 
 export default function MyBottle() {
@@ -61,7 +61,7 @@ export default function MyBottle() {
                 {activeSection === "settings" ? (
                     <BottleSettings onDataChange={() => bottleRef.current?.refreshBottleData()} />
                 ) : activeSection === "statistics" ? (
-                    <BottleStatistics />
+                    <BottleActivity />
                 ) : (
                     <>
                         <h4 className="text-[18px] font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
