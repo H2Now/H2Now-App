@@ -230,7 +230,7 @@ def get_water_bottle():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT bottleName, goal FROM Bottle WHERE userID=%s", (user_id,))
+        cursor.execute("SELECT bottleName, goal, connected FROM Bottle WHERE userID=%s", (user_id,))
         bottle = cursor.fetchone()
     finally:
         cursor.close()
@@ -239,7 +239,7 @@ def get_water_bottle():
     if not bottle:
         return jsonify({"success" : False, "message": "Bottle not found"}), 404
 
-    return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"]}), 200
+    return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"], "connected": bottle["connected"]}), 200
 
 
 # Get user's intake for today 
