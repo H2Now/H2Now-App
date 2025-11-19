@@ -1,33 +1,96 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
 
-export default function Bottle({ onConnectionChange }) {
+const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-    const [connectedBottle, setConnectedBottle] = useState(false)
+    const [bottleExists, setBottleExists] = useState(false)
+    const [bottleConnected, setBottleConnected] = useState(false)
     const [connecting, setConnecting] = useState(false)
+    const [checkingConnection, setCheckingConnection] = useState(true)
     const [error, setError] = useState(null)
     const [bottleName, setBottleName] = useState("")
     const [showAddBottleModal, setShowAddBottleModal] = useState(false)
     const [newBottleName, setNewBottleName] = useState("")
     const [addingBottle, setAddingBottle] = useState(false)
-    
+
     // Daily intake data
     const [dailyGoal, setDailyGoal] = useState(2000) // ml
     const [currentIntake, setCurrentIntake] = useState(0) // ml
     const [loadingIntake, setLoadingIntake] = useState(true)
     const intakePercentage = Math.round((currentIntake / dailyGoal) * 100)
-    const waterLevel = 65 // Hardcoded for now - TODO: will reflect intakePercentage when add intake functionality is implemented
-    
+    // Water level is capped at 100% to prevent overflow visualization
+    const waterLevel = Math.min(intakePercentage, 100)
+
     // Get current date
-    const today = new Date().toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+    const today = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     })
 
-    // Fetch today's intake and goal on component mount
+    // Function to fetch bottle data (name and goal)
+    const fetchBottleData = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/user/water_bottle`, {
+                credentials: "include",
+            })
+            const data = await res.json()
+            if (res.ok && data.success) {
+                setBottleExists(true)
+                setBottleName(data.bottleName)
+                setDailyGoal(data.goal)
+                setBottleConnected(data.connected)
+            } else {
+                setBottleExists(false)
+            }
+
+            // Also fetch today's intake to recalculate water level
+            const intakeRes = await fetch(`${API_URL}/api/user/water_bottle/intake/today`, {
+                credentials: "include",
+            })
+            const intakeData = await intakeRes.json()
+            if (intakeRes.ok && intakeData.success) {
+                setCurrentIntake(intakeData.totalIntake)
+            }
+        } catch (err) {
+            console.error("Error fetching bottle data:", err)
+        }
+    }
+
+    // Expose refresh function to parent via ref
+    useImperativeHandle(ref, () => ({
+        refreshBottleData: fetchBottleData
+    }))
+
+    // Check if bottle exists and is connected on component mount
     useEffect(() => {
+        const checkAndConnectBottle = async () => {
+            setCheckingConnection(true)
+            try {
+                const res = await fetch(`${API_URL}/api/user/water_bottle`, {
+                    credentials: "include",
+                })
+                const data = await res.json()
+
+                if (res.ok && data.success) {
+                    setBottleExists(true)
+                    setBottleName(data.bottleName || "My H2Now Bottle")
+                    setDailyGoal(data.goal)
+                    // We know that bottle exists. now check if its connected/online
+                    if (data.connected) {
+                        setBottleConnected(true)
+                    } else {
+                        setBottleConnected(false)
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to check bottle connection:", error)
+            } finally {
+                setCheckingConnection(false)
+            }
+        }
+
         const fetchTodayIntake = async () => {
             try {
                 const res = await fetch(`${API_URL}/api/user/water_bottle/intake/today`, {
@@ -35,7 +98,6 @@ export default function Bottle({ onConnectionChange }) {
                 })
                 const data = await res.json()
                 if (res.ok && data.success) {
-                    setDailyGoal(data.goal)
                     setCurrentIntake(data.totalIntake)
                 }
             } catch (error) {
@@ -44,33 +106,50 @@ export default function Bottle({ onConnectionChange }) {
                 setLoadingIntake(false)
             }
         }
+
+        checkAndConnectBottle()
         fetchTodayIntake()
     }, [])
 
     // Notify parent component when bottle connection state changes
     useEffect(() => {
         if (onConnectionChange) {
-            onConnectionChange(connectedBottle)
+            onConnectionChange(bottleExists)
         }
-    }, [connectedBottle, onConnectionChange])
+    }, [bottleExists, onConnectionChange])
 
     const handleConnectBottle = async () => {
         setError(null)
         setConnecting(true)
         try {
+            // Check bottle status from existing GET endpoint
             const res = await fetch(`${API_URL}/api/user/water_bottle`, {
                 credentials: "include",
             })
             const data = await res.json()
+            
             setTimeout(() => {
                 if (!res.ok || !data.success) {
+                    // No bottle exists - show add bottle modal
                     setShowAddBottleModal(true)
                     setConnecting(false)
                 } else {
-                    setConnectedBottle(true)
+                    // Bottle exists in database
+                    setBottleExists(true)
                     setBottleName(data.bottleName || "My H2Now Bottle")
-                    setConnecting(false)
-                }   
+                    setDailyGoal(data.goal)
+                    
+                    if (data.connected) {
+                        // Bottle is online
+                        setBottleConnected(true)
+                        setConnecting(false)
+                    } else {
+                        // Bottle exists but is offline
+                        setBottleConnected(false)
+                        setError("Bottle offline. Please ensure device is switched on and try again")
+                        setConnecting(false)
+                    }
+                }
             }, 1500)
         } catch (error) {
             setTimeout(() => {
@@ -92,8 +171,8 @@ export default function Bottle({ onConnectionChange }) {
     }
 
     const handleDisconnectBottle = () => {
-        setConnectedBottle(false)
-        setBottleName("")
+        // TODO: call api to disconnect
+        setBottleConnected(false)
     }
 
     return (
@@ -169,13 +248,14 @@ export default function Bottle({ onConnectionChange }) {
 
             {/* Bottle and Overview - Side by Side */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-5xl">
+
                 {/* Daily Goal Overview */}
                 <div className="w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-5">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-[16px] font-semibold text-gray-900 dark:text-gray-100">Today's Goal</h3>
                         <span className="text-xs text-gray-500 dark:text-gray-400">{today}</span>
                     </div>
-                    
+
                     {loadingIntake ? (
                         <div className="flex items-center justify-center py-8">
                             <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -203,23 +283,46 @@ export default function Bottle({ onConnectionChange }) {
                     )}
                 </div>
 
+                {/* Bottle Name Section */}
+                {bottleExists && (bottleName || "My H2Now Bottle") && (
+                    <div className="px-4 py-2 bg-blue-100 dark:bg-blue-900/40 
+                    text-blue-600 dark:text-blue-300 
+                    rounded-xl font-semibold shadow-sm">
+                        {bottleName || "My H2Now Bottle"}
+                    </div>
+                )}
+
+
                 {/* Bottle Visualization Section */}
                 <div className="flex flex-col items-center">
-                    {!connectedBottle ? (
-                        // Not Connected State
+                    {checkingConnection ? (
+                        // Checking Connection State
+                        <div className="flex flex-col items-center gap-6">
+                            <div className="w-[200px] h-[280px] flex items-center justify-center">
+                                <svg className="animate-spin h-12 w-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                            <p className="text-[16px] font-medium text-gray-600 dark:text-gray-300">
+                                Checking connection...
+                            </p>
+                        </div>
+                    ) : !bottleExists ? (
+                        // State 1: No Bottle Exists
                         <div className="flex flex-col items-center gap-6">
                             {/* Bottle Icon (Empty/Disconnected) */}
                             <div className="w-[200px] h-[280px] relative">
                                 <svg viewBox="0 0 200 280" className="w-full h-full">
                                     {/* Bottle Cap */}
-                                    <rect x="70" y="10" width="60" height="30" rx="4" 
-                                        className="fill-gray-300 dark:fill-gray-600 stroke-gray-400 dark:stroke-gray-500" strokeWidth="2"/>
-                                    
+                                    <rect x="70" y="10" width="60" height="30" rx="4"
+                                        className="fill-gray-300 dark:fill-gray-600 stroke-gray-400 dark:stroke-gray-500" strokeWidth="2" />
+
                                     {/* Bottle Neck */}
-                                    <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z" 
-                                        className="fill-gray-200/50 dark:fill-gray-700/50 stroke-gray-300 dark:stroke-gray-600" strokeWidth="3"/>
+                                    <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z"
+                                        className="fill-gray-200/50 dark:fill-gray-700/50 stroke-gray-300 dark:stroke-gray-600" strokeWidth="3" />
                                 </svg>
-                                
+
                                 {/* Disconnected Icon Overlay */}
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="w-16 h-16 rounded-full bg-gray-300/80 dark:bg-gray-700/80 backdrop-blur-sm flex items-center justify-center">
@@ -268,96 +371,153 @@ export default function Bottle({ onConnectionChange }) {
                                 )}
                             </button>
                         </div>
-                    ) : (
-                        // Connected State
+                    ) : bottleExists ? (
+                        // State 2 & 3: Bottle Exists (Connected or Disconnected)
                         <div className="flex flex-col items-center gap-6">
                             {/* Bottle Visualization with Water Level */}
                             <div className="w-[200px] h-[280px] relative">
                                 <svg viewBox="0 0 200 280" className="w-full h-full">
                                     {/* Bottle Cap */}
-                                    <rect x="70" y="10" width="60" height="30" rx="4" 
-                                        className="fill-blue-400 dark:fill-blue-500 stroke-blue-500 dark:stroke-blue-600" strokeWidth="2"/>
-                                    
+                                    <rect x="70" y="10" width="60" height="30" rx="4"
+                                        className={bottleConnected 
+                                            ? "fill-blue-400 dark:fill-blue-500 stroke-blue-500 dark:stroke-blue-600" 
+                                            : "fill-gray-400 dark:fill-gray-500 stroke-gray-500 dark:stroke-gray-600"
+                                        } strokeWidth="2" />
+
                                     {/* Bottle Outline */}
-                                    <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z" 
-                                        className="fill-white/30 dark:fill-slate-700/30 stroke-blue-400 dark:stroke-blue-500" strokeWidth="3"/>
-                                    
+                                    <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z"
+                                        className={bottleConnected
+                                            ? "fill-white/30 dark:fill-slate-700/30 stroke-blue-400 dark:stroke-blue-500"
+                                            : "fill-white/30 dark:fill-slate-700/30 stroke-gray-400 dark:stroke-gray-500"
+                                        } strokeWidth="3" />
+
                                     {/* Water Level */}
                                     <defs>
                                         <clipPath id="bottleClip">
                                             <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z" />
                                         </clipPath>
                                     </defs>
-                                    <rect 
-                                        x="50" 
-                                        y={270 - (waterLevel / 100 * 230)} 
-                                        width="100" 
+                                    <rect
+                                        x="50"
+                                        y={270 - (waterLevel / 100 * 230)}
+                                        width="100"
                                         height={(waterLevel / 100 * 230)}
-                                        className="fill-blue-400/60 dark:fill-blue-500/60"
+                                        className={bottleConnected
+                                            ? "fill-blue-400/60 dark:fill-blue-500/60"
+                                            : "fill-gray-400/60 dark:fill-gray-500/60"
+                                        }
                                         clipPath="url(#bottleClip)"
                                     />
-                                    
+
                                     {/* Water Surface Wave */}
-                                    <path 
+                                    <path
                                         d={`M 50 ${270 - (waterLevel / 100 * 230)} Q 75 ${270 - (waterLevel / 100 * 230) - 3} 100 ${270 - (waterLevel / 100 * 230)} T 150 ${270 - (waterLevel / 100 * 230)}`}
-                                        className="fill-none stroke-blue-500 dark:stroke-blue-400" 
+                                        className={bottleConnected
+                                            ? "fill-none stroke-blue-500 dark:stroke-blue-400"
+                                            : "fill-none stroke-gray-500 dark:stroke-gray-400"
+                                        }
                                         strokeWidth="2"
                                         clipPath="url(#bottleClip)"
                                     />
-                                    
+
                                     {/* Shine effect */}
-                                    <ellipse cx="75" cy="140" rx="15" ry="40" 
-                                        className="fill-white/30 dark:fill-white/20"/>
+                                    <ellipse cx="75" cy="140" rx="15" ry="40"
+                                        className="fill-white/30 dark:fill-white/20" />
                                 </svg>
 
-                                {/* Connected Status Indicator */}
+                                {/* Status Indicator - Green (connected) or Red (disconnected) */}
                                 <div className="absolute top-2 right-2 flex items-center gap-1">
-                                    <span className="relative flex h-3 w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                                    </span>
+                                    {bottleConnected ? (
+                                        <span className="relative flex h-3 w-3">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                        </span>
+                                    ) : (
+                                        <span className="relative flex h-3 w-3">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                        </span>
+                                    )}
                                 </div>
 
                                 {/* Water Level Percentage */}
                                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                                    <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full border border-blue-200 dark:border-blue-700">
-                                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{waterLevel}%</p>
+                                    <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full ${
+                                        bottleConnected 
+                                            ? "border border-blue-200 dark:border-blue-700"
+                                            : "border border-gray-200 dark:border-gray-700"
+                                    }`}>
+                                        <p className={`text-sm font-bold ${
+                                            bottleConnected
+                                                ? "text-blue-600 dark:text-blue-400"
+                                                : "text-gray-600 dark:text-gray-400"
+                                        }`}>{waterLevel}%</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="w-[293px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-[18px] font-semibold text-gray-900 dark:text-gray-100">
-                                        {bottleName}
-                                    </p>
-                                    <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full font-medium">
-                                        Connected
-                                    </span>
-                                </div>
-                                <p className="text-[14px] text-gray-600 dark:text-gray-400">
-                                    Current Level: {waterLevel}% • 500ml
+                            {/* Status Message (only shown when disconnected) */}
+                            {!bottleConnected && (
+                                <p className="text-[16px] font-medium text-gray-600 dark:text-gray-400">
+                                    Bottle Offline
                                 </p>
-                            </div>
+                            )}
 
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => {/* Navigate to detailed bottle page */}}
-                                    className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-sm transition-all duration-200"
-                                >
-                                    View Details
-                                </button>
+                            {/* Error Message */}
+                            {error && (
+                                <div className="w-[293px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
+                                    <div className="flex items-start">
+                                        <svg className="h-5 w-5 text-red-400 dark:text-red-400 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-sm">{error}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Connect/Disconnect Button */}
+                            {bottleConnected ? (
                                 <button
                                     onClick={handleDisconnectBottle}
-                                    className="px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg shadow-sm transition-all duration-200"
+                                    className="w-[200px] h-[50px] bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
                                 >
-                                    Disconnect
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                    </svg>
+                                    <span>Disconnect</span>
                                 </button>
-                            </div>
+                            ) : (
+                                <button
+                                    onClick={handleConnectBottle}
+                                    disabled={connecting}
+                                    className="w-[200px] h-[50px] bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+                                >
+                                    {connecting ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Connecting...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                            <span>Connect</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </div>
         </>
     )
-}
+})
+
+Bottle.displayName = 'Bottle'
+
+export default Bottle
