@@ -203,6 +203,31 @@ class BottleEventListener(SubscribeCallback):
         )
         conn.commit()
 
+        # fetch totalIntake
+        cursor.execute(
+            """
+            SELECT totalIntake
+            FROM Intake 
+            WHERE bottleID = %s AND intakeDate = CURDATE()
+            """,
+            (bottle_id,)
+        )
+        result = cursor.fetchone()
+
+        if not result:
+            print(f"Error: No intake record found for {bottle_id} today!")
+            return
+
+        total_intake = int(result["totalIntake"])
+
+        # Publish water intake amount to frontend
+        self._publish_to_frontend({
+            "type": "intake_update",
+            "bottleID": bottle_id,
+            "totalIntake": total_intake,
+            "timestamp": datetime.now().isoformat()
+        })
+
     def _publish_to_frontend(self, message):
         frontend_channel = os.getenv("FRONTEND_PUBNUB_CHANNEL")
         try:

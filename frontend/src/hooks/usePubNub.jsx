@@ -3,13 +3,16 @@ import { useState, useEffect } from 'react'
 
 export default function usePubNub(userId) {
     const [bottleConnected, setBottleConnected] = useState(false)
+    const [latestIntake, setLatestIntake] = useState(null)
 
     useEffect(() => {
         if (!userId) return
 
         const pubnub = new PubNub({
             subscribeKey: import.meta.env.VITE_PUBNUB_SUBSCRIBE_KEY,
-            uuid: `user-${userId}`
+            uuid: `user-${userId}`,
+            restore: false,
+            
         })
 
         const channel = import.meta.env.VITE_FRONTEND_PUBNUB_CHANNEL
@@ -25,8 +28,13 @@ export default function usePubNub(userId) {
                         console.log("Bottle connection status: ", message.connected)
                         break
                     case 'intake_update':
-                    // TBC
-
+                        setLatestIntake({
+                            total: message.totalIntake
+                        })
+                        console.log("Bottle received intake amount:", {
+                            total: message.totalIntake
+                        })
+                        break
                     default:
                         console.log("Unknown message type: ", message.type)
                 }
@@ -57,5 +65,6 @@ export default function usePubNub(userId) {
 
     return {
         bottleConnected,
+        latestIntake
     }
 }

@@ -9,7 +9,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const [checkingDatabase, setCheckingDatabase] = useState(true)
     const [isPiOnline, setIsPiOnline] = useState(false)
 
-    const {bottleConnected: pubnubStatus} = usePubNub(userId)
+    const { bottleConnected: pubnubStatus, latestIntake } = usePubNub(userId)
 
     const [error, setError] = useState(null)
     const [bottleName, setBottleName] = useState("")
@@ -33,9 +33,17 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
         day: 'numeric'
     })
 
+    // Update connection status
     useEffect(() => {
         setIsPiOnline(pubnubStatus)
     }, [pubnubStatus])
+
+    // Handle real-time intake updates
+    useEffect(() => {
+        if (latestIntake) {
+            setCurrentIntake(latestIntake.total)
+        }
+    }, [latestIntake])
 
     // Function to fetch bottle data (name and goal)
     const fetchBottleData = async () => {
@@ -346,8 +354,8 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                 <svg viewBox="0 0 200 280" className="w-full h-full">
                                     {/* Bottle Cap */}
                                     <rect x="70" y="10" width="60" height="30" rx="4"
-                                        className={isPiOnline 
-                                            ? "fill-blue-400 dark:fill-blue-500 stroke-blue-500 dark:stroke-blue-600" 
+                                        className={isPiOnline
+                                            ? "fill-blue-400 dark:fill-blue-500 stroke-blue-500 dark:stroke-blue-600"
                                             : "fill-gray-400 dark:fill-gray-500 stroke-gray-500 dark:stroke-gray-600"
                                         } strokeWidth="2" />
 
@@ -409,16 +417,14 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                                 {/* Water Level Percentage */}
                                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                                    <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full ${
-                                        isPiOnline 
+                                    <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full ${isPiOnline
                                             ? "border border-blue-200 dark:border-blue-700"
                                             : "border border-gray-200 dark:border-gray-700"
-                                    }`}>
-                                        <p className={`text-sm font-bold ${
-                                            isPiOnline
+                                        }`}>
+                                        <p className={`text-sm font-bold ${isPiOnline
                                                 ? "text-blue-600 dark:text-blue-400"
                                                 : "text-gray-600 dark:text-gray-400"
-                                        }`}>{waterLevel}%</p>
+                                            }`}>{waterLevel}%</p>
                                     </div>
                                 </div>
                             </div>
