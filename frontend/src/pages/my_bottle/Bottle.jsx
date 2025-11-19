@@ -1,12 +1,16 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
+import usePubNub from "../../hooks/usePubNub"
 
 const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-    const [bottleExists, setBottleExists] = useState(false)
-    const [bottleConnected, setBottleConnected] = useState(false)
-    const [connecting, setConnecting] = useState(false)
-    const [checkingConnection, setCheckingConnection] = useState(true)
+    const [userId, setUserId] = useState(null)
+    const [hasBottleInDB, setHasBottleInDB] = useState(false)
+    const [checkingDatabase, setCheckingDatabase] = useState(true)
+    const [isPiOnline, setIsPiOnline] = useState(false)
+
+    const { bottleConnected: pubnubStatus, latestIntake } = usePubNub(userId)
+
     const [error, setError] = useState(null)
     const [bottleName, setBottleName] = useState("")
     const [showAddBottleModal, setShowAddBottleModal] = useState(false)
@@ -29,6 +33,18 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
         day: 'numeric'
     })
 
+    // Update connection status
+    useEffect(() => {
+        setIsPiOnline(pubnubStatus)
+    }, [pubnubStatus])
+
+    // Handle real-time intake updates
+    useEffect(() => {
+        if (latestIntake) {
+            setCurrentIntake(latestIntake.total)
+        }
+    }, [latestIntake])
+
     // Function to fetch bottle data (name and goal)
     const fetchBottleData = async () => {
         try {
@@ -37,12 +53,9 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
             })
             const data = await res.json()
             if (res.ok && data.success) {
-                setBottleExists(true)
                 setBottleName(data.bottleName)
                 setDailyGoal(data.goal)
-                setBottleConnected(data.connected)
-            } else {
-                setBottleExists(false)
+                setIsPiOnline(data.connected || false)
             }
 
             // Also fetch today's intake to recalculate water level
@@ -63,31 +76,39 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
         refreshBottleData: fetchBottleData
     }))
 
-    // Check if bottle exists and is connected on component mount
+    // On mount: Get userID and check if bottle exists in DB
     useEffect(() => {
-        const checkAndConnectBottle = async () => {
-            setCheckingConnection(true)
+        const initialize = async () => {
+            setCheckingDatabase(true)
             try {
-                const res = await fetch(`${API_URL}/api/user/water_bottle`, {
+                // get userID for pubnub
+                const userRes = await fetch(`${API_URL}/api/user`, {
                     credentials: "include",
                 })
-                const data = await res.json()
+                const userData = await userRes.json()
 
-                if (res.ok && data.success) {
-                    setBottleExists(true)
-                    setBottleName(data.bottleName || "My H2Now Bottle")
-                    setDailyGoal(data.goal)
-                    // We know that bottle exists. now check if its connected/online
-                    if (data.connected) {
-                        setBottleConnected(true)
-                    } else {
-                        setBottleConnected(false)
-                    }
+                if (userRes.ok && userData.success) {
+                    setUserId(userData.user.id)
+                }
+                // get bottle data
+                const bottleRes = await fetch(`${API_URL}/api/user/water_bottle`, {
+                    credentials: "include",
+                })
+                const bottleData = await bottleRes.json()
+
+                if (bottleRes.ok && bottleData.success) {
+                    setHasBottleInDB(true)
+                    setBottleName(bottleData.bottleName)
+                    setDailyGoal(bottleData.goal)
+                    setIsPiOnline(bottleData.connected || false)
+                } else {
+                    setHasBottleInDB(false)
                 }
             } catch (error) {
                 console.error("Failed to check bottle connection:", error)
+                setHasBottleInDB(false)
             } finally {
-                setCheckingConnection(false)
+                setCheckingDatabase(false)
             }
         }
 
@@ -107,57 +128,16 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
             }
         }
 
-        checkAndConnectBottle()
+        initialize()
         fetchTodayIntake()
     }, [])
 
-    // Notify parent component when bottle connection state changes
+    // Notify parent component when bottle exists
     useEffect(() => {
         if (onConnectionChange) {
-            onConnectionChange(bottleExists)
+            onConnectionChange(hasBottleInDB)
         }
-    }, [bottleExists, onConnectionChange])
-
-    const handleConnectBottle = async () => {
-        setError(null)
-        setConnecting(true)
-        try {
-            // Check bottle status from existing GET endpoint
-            const res = await fetch(`${API_URL}/api/user/water_bottle`, {
-                credentials: "include",
-            })
-            const data = await res.json()
-            
-            setTimeout(() => {
-                if (!res.ok || !data.success) {
-                    // No bottle exists - show add bottle modal
-                    setShowAddBottleModal(true)
-                    setConnecting(false)
-                } else {
-                    // Bottle exists in database
-                    setBottleExists(true)
-                    setBottleName(data.bottleName || "My H2Now Bottle")
-                    setDailyGoal(data.goal)
-                    
-                    if (data.connected) {
-                        // Bottle is online
-                        setBottleConnected(true)
-                        setConnecting(false)
-                    } else {
-                        // Bottle exists but is offline
-                        setBottleConnected(false)
-                        setError("Bottle offline. Please ensure device is switched on and try again")
-                        setConnecting(false)
-                    }
-                }
-            }, 1500)
-        } catch (error) {
-            setTimeout(() => {
-                setError("Something went wrong.. Please try again!")
-                setConnecting(false)
-            }, 1500)
-        }
-    }
+    }, [hasBottleInDB, onConnectionChange])
 
     const handleAddNewBottle = async () => {
         if (!newBottleName.trim()) {
@@ -168,11 +148,6 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
         setShowAddBottleModal(false)
         setNewBottleName("")
         setError(null)
-    }
-
-    const handleDisconnectBottle = () => {
-        // TODO: call api to disconnect
-        setBottleConnected(false)
     }
 
     return (
@@ -284,7 +259,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                 </div>
 
                 {/* Bottle Name Section */}
-                {bottleExists && (bottleName || "My H2Now Bottle") && (
+                {hasBottleInDB && (bottleName || "My H2Now Bottle") && (
                     <div className="px-4 py-2 bg-blue-100 dark:bg-blue-900/40 
                     text-blue-600 dark:text-blue-300 
                     rounded-xl font-semibold shadow-sm">
@@ -295,7 +270,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                 {/* Bottle Visualization Section */}
                 <div className="flex flex-col items-center">
-                    {checkingConnection ? (
+                    {checkingDatabase ? (
                         // Checking Connection State
                         <div className="flex flex-col items-center gap-6">
                             <div className="w-[200px] h-[280px] flex items-center justify-center">
@@ -305,10 +280,10 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                 </svg>
                             </div>
                             <p className="text-[16px] font-medium text-gray-600 dark:text-gray-300">
-                                Checking connection...
+                                Loading...
                             </p>
                         </div>
-                    ) : !bottleExists ? (
+                    ) : !hasBottleInDB ? (
                         // State 1: No Bottle Exists
                         <div className="flex flex-col items-center gap-6">
                             {/* Bottle Icon (Empty/Disconnected) */}
@@ -334,7 +309,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                             </div>
 
                             <p className="text-[20px] font-semibold text-gray-700 dark:text-gray-200 text-center px-4">
-                                No Bottle Connected
+                                No Bottle Registered
                             </p>
 
                             {error && (
@@ -348,7 +323,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                 </div>
                             )}
 
-                            <button
+                            {/* <button
                                 onClick={handleConnectBottle}
                                 disabled={connecting}
                                 className="w-[200px] h-[50px] bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
@@ -369,9 +344,9 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                         <span>Connect Bottle</span>
                                     </>
                                 )}
-                            </button>
+                            </button> */}
                         </div>
-                    ) : bottleExists ? (
+                    ) : hasBottleInDB ? (
                         // State 2 & 3: Bottle Exists (Connected or Disconnected)
                         <div className="flex flex-col items-center gap-6">
                             {/* Bottle Visualization with Water Level */}
@@ -379,14 +354,14 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                 <svg viewBox="0 0 200 280" className="w-full h-full">
                                     {/* Bottle Cap */}
                                     <rect x="70" y="10" width="60" height="30" rx="4"
-                                        className={bottleConnected 
-                                            ? "fill-blue-400 dark:fill-blue-500 stroke-blue-500 dark:stroke-blue-600" 
+                                        className={isPiOnline
+                                            ? "fill-blue-400 dark:fill-blue-500 stroke-blue-500 dark:stroke-blue-600"
                                             : "fill-gray-400 dark:fill-gray-500 stroke-gray-500 dark:stroke-gray-600"
                                         } strokeWidth="2" />
 
                                     {/* Bottle Outline */}
                                     <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z"
-                                        className={bottleConnected
+                                        className={isPiOnline
                                             ? "fill-white/30 dark:fill-slate-700/30 stroke-blue-400 dark:stroke-blue-500"
                                             : "fill-white/30 dark:fill-slate-700/30 stroke-gray-400 dark:stroke-gray-500"
                                         } strokeWidth="3" />
@@ -402,7 +377,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                         y={270 - (waterLevel / 100 * 230)}
                                         width="100"
                                         height={(waterLevel / 100 * 230)}
-                                        className={bottleConnected
+                                        className={isPiOnline
                                             ? "fill-blue-400/60 dark:fill-blue-500/60"
                                             : "fill-gray-400/60 dark:fill-gray-500/60"
                                         }
@@ -412,7 +387,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                     {/* Water Surface Wave */}
                                     <path
                                         d={`M 50 ${270 - (waterLevel / 100 * 230)} Q 75 ${270 - (waterLevel / 100 * 230) - 3} 100 ${270 - (waterLevel / 100 * 230)} T 150 ${270 - (waterLevel / 100 * 230)}`}
-                                        className={bottleConnected
+                                        className={isPiOnline
                                             ? "fill-none stroke-blue-500 dark:stroke-blue-400"
                                             : "fill-none stroke-gray-500 dark:stroke-gray-400"
                                         }
@@ -427,7 +402,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                                 {/* Status Indicator - Green (connected) or Red (disconnected) */}
                                 <div className="absolute top-2 right-2 flex items-center gap-1">
-                                    {bottleConnected ? (
+                                    {isPiOnline ? (
                                         <span className="relative flex h-3 w-3">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
@@ -442,22 +417,20 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                                 {/* Water Level Percentage */}
                                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                                    <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full ${
-                                        bottleConnected 
+                                    <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full ${isPiOnline
                                             ? "border border-blue-200 dark:border-blue-700"
                                             : "border border-gray-200 dark:border-gray-700"
-                                    }`}>
-                                        <p className={`text-sm font-bold ${
-                                            bottleConnected
+                                        }`}>
+                                        <p className={`text-sm font-bold ${isPiOnline
                                                 ? "text-blue-600 dark:text-blue-400"
                                                 : "text-gray-600 dark:text-gray-400"
-                                        }`}>{waterLevel}%</p>
+                                            }`}>{waterLevel}%</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Status Message (only shown when disconnected) */}
-                            {!bottleConnected && (
+                            {!isPiOnline && (
                                 <p className="text-[16px] font-medium text-gray-600 dark:text-gray-400">
                                     Bottle Offline
                                 </p>
@@ -473,42 +446,6 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                         <span className="text-sm">{error}</span>
                                     </div>
                                 </div>
-                            )}
-
-                            {/* Connect/Disconnect Button */}
-                            {bottleConnected ? (
-                                <button
-                                    onClick={handleDisconnectBottle}
-                                    className="w-[200px] h-[50px] bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
-                                >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                    </svg>
-                                    <span>Disconnect</span>
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleConnectBottle}
-                                    disabled={connecting}
-                                    className="w-[200px] h-[50px] bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
-                                >
-                                    {connecting ? (
-                                        <>
-                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            <span>Connecting...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                            <span>Connect</span>
-                                        </>
-                                    )}
-                                </button>
                             )}
                         </div>
                     ) : null}
