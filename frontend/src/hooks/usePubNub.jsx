@@ -1,4 +1,5 @@
 import PubNub from 'pubnub'
+import { useState, useEffect } from 'react'
 
 export default function usePubNub(userId) {
     const [bottleConnected, setBottleConnected] = useState(false)
@@ -7,12 +8,12 @@ export default function usePubNub(userId) {
         if (!userId) return
 
         const pubnub = new PubNub({
-            subKey: import.meta.env.VITE_PUBNUB_SUBSCRIBE_KEY,
-            uuid: `user-${userId}`,
+            subscribeKey: import.meta.env.VITE_PUBNUB_SUBSCRIBE_KEY,
+            uuid: `user-${userId}`
         })
 
-        const channel = import.meta.env.VITE_FRONTEND_CHANNEL
-
+        const channel = import.meta.env.VITE_FRONTEND_PUBNUB_CHANNEL
+            console.log("🔍 Subscribing to channel:", channel)
         const listener = {
             message: (event) => {
                 const message = event.message
@@ -31,6 +32,10 @@ export default function usePubNub(userId) {
                 }
             },
             status: (event) => {
+                if (event.error && event.statusCode === 404) {
+                    console.log('PubNub: Ignoring 404 (session expired)')
+                    return
+                }
                 if (event.category === 'PNConnectedCategory') {
                     console.log('Frontend connected to PubNub')
                 }
@@ -38,7 +43,7 @@ export default function usePubNub(userId) {
         }
 
         pubnub.addListener(listener)
-        pubnub.subscribe({ channels:[channel]})
+        pubnub.subscribe({ channels: [channel] })
 
         console.log(`Frontend subscribed to: ${channel}`)
 
@@ -46,8 +51,7 @@ export default function usePubNub(userId) {
         return () => {
             console.log('Frontend unsubscribing from PubNub')
             pubnub.removeListener(listener)
-            pubnub.unsubscribe({ channels: [channel] })
-            pubnub.stop()
+            pubnub.unsubscribeAll()
         }
     }, [userId])
 

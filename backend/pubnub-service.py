@@ -29,6 +29,9 @@ pubnub_publisher = None
 
 # PubNub Event Listener
 class BottleEventListener(SubscribeCallback):
+    def __init__(self, publisher):
+        super().__init__()
+        self.publisher = publisher 
     def presence(self, pubnub, presence):
         # Gets the UUID of who joined/left (bottle_001, flask_server)
         uuid = presence.uuid
@@ -200,6 +203,15 @@ class BottleEventListener(SubscribeCallback):
         )
         conn.commit()
 
+    def _publish_to_frontend(self, message):
+        frontend_channel = os.getenv("FRONTEND_PUBNUB_CHANNEL")
+        try:
+            result = self.publisher.publish().channel(frontend_channel).message(message).sync()
+            print(f"Published to frontend: {message}")
+            print(f"Status: {result.status.status_code}")
+        except Exception as e:
+            print(f"Failed to publish to frontend: {e}")
+
 if __name__ == "__main__":
     # Configure PubNub for subscribing (raw data from Pi)
     pnconfig = PNConfiguration()
@@ -215,12 +227,12 @@ if __name__ == "__main__":
     pubnub_publisher = PubNub(pnconfig_publisher)
     
     # Start listener
-    listener = BottleEventListener()
+    listener = BottleEventListener(pubnub_publisher)
     pubnub.add_listener(listener)
 
     # Channels
     channel = os.getenv("PUBNUB_CHANNEL")
-    frontend_channel = os.getenv("PUBNUB_FRONTEND_CHANNEL")
+    frontend_channel = os.getenv("FRONTEND_PUBNUB_CHANNEL")
     
     print("="*60)
     print("🚀 PubNub Service Starting")
