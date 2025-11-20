@@ -3,8 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 
 function RegisterPage() {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-    console.log('API_URL:', API_URL)
-    console.log('VITE_API_URL:',import.meta.env.VITE_API_URL)
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -64,7 +62,7 @@ function RegisterPage() {
         }
 
         try {
-            const res = await fetch(`${API_URL}/auth/register`, {
+            const res = await fetch(`${API_URL}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, email, password }),
