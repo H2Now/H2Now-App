@@ -15,13 +15,13 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+CORS(app, origins=["http://localhost:5173", "http://www.h2now.online", "https://www.h2now.online"], supports_credentials=True)
 
 app.secret_key = os.getenv("SECRET_KEY")
 
 # stores the session id in a file system (folder called flask_session)
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = "./flask_session"
+app.config["SESSION_FILE_DIR"] = "/var/www/H2Now-App/backend/flask_session"
 # uses secret key to sign the cookies
 app.config["SESSION_USE_SIGNER"] = True
 app.config["SESSION_PERMANENT"] = False
@@ -38,7 +38,7 @@ def get_db_connection():
     )
 
 # Register endpoint. Creates user and hashes password
-@app.route("/api/auth/register", methods=["POST"])
+@app.route("/auth/register", methods=["POST"])
 def register():
     data = request.get_json(silent=True)
 
@@ -49,45 +49,42 @@ def register():
     email = data.get("email")
     password = data.get("password")
 
-    # check for empty fields
     if not name or not email or not password:
         return jsonify({"success": False, "message": "Please fill out all fields!"}), 400
-    
-    # Email validation
+
     email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
     if not re.match(email_regex, email):
-        return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
+        return jsonify({"success": False, "message": "Invalid email"}), 400
 
-    # Password validation (8–32 chars, one uppercase, one lowercase, one special character)
     password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,32}$"
     if not re.match(password_regex, password):
-        return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
+        return jsonify({"success": False, "message": "Password does not meet requirements"}), 400
 
-    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    # Check if user exists
+    existing_user = None
+    with get_db_connection() as conn:
+        with conn.cursor(buffered=True) as cursor:
+            cursor.execute(
+                "SELECT userID FROM User WHERE email=%s OR name=%s",
+                (email, name)
+            )
+            existing_user = cursor.fetchone()
 
-        # check if username or email already exists
-        cursor.execute(
-            "SELECT userID from User WHERE email=%s OR name=%s", 
-            (email, name))
-        existing_user = cursor.fetchone()
-        if existing_user:
-            return jsonify({"success": False, "message": "Something went wrong.. Please try again!"}), 400
-        
-        # insert new user
-        cursor.execute(
-            "INSERT INTO User (name, email, password) VALUES(%s, %s, %s)",
-            (name, email, hashed_password.decode('utf-8'))
-        )
-        conn.commit()
-    finally:
-        cursor.close()
-        conn.close()
+    if existing_user:
+        return jsonify({"success": False, "message": "User already exists"}), 400
 
-    return jsonify({"success": True, "message": "Registration successful! Please login.."}), 201
+    # Insert new user
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO User (name, email, password) VALUES(%s, %s, %s)",
+                (name, email, hashed_password)
+            )
+            conn.commit()
+
+    return jsonify({"success": True, "message": "Registration successful! Please login."}), 201
 
 
 # Login endpoint. Verifies email and password hash
@@ -239,7 +236,7 @@ def get_water_bottle():
     if not bottle:
         return jsonify({"success" : False, "message": "Bottle not found"}), 404
 
-    return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"], "connected": bool(bottle["connected"])}), 200
+    return jsonify({"success" : True, "bottleName": bottle["bottleName"], "goal": bottle["goal"], "connected": bottle["connected"]}), 200
 
 
 # Get user's intake for today 
@@ -368,4 +365,3 @@ def update_user_settings():
 
 if __name__ == "__main__":
     app.run()
-

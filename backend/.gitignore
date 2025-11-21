@@ -2,3 +2,5 @@ __pycache__/
 /flask_session
 .env
 venv
+.env.production
+h2now.wsgi

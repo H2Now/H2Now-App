@@ -27,7 +27,7 @@ CREATE TABLE User (
 -- ==============================
 CREATE TABLE Bottle (
     bottleID VARCHAR(50) PRIMARY KEY,
-    userID INT UNIQUE NOT NULL,
+    userID INT UNIQUE,
     bottleName VARCHAR(150) NOT NULL,
     capacity DECIMAL(6,2) NOT NULL,
     goal DECIMAL(6,2) NOT NULL,
