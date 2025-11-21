@@ -24,8 +24,14 @@ def get_db_connection():
 
 active_sessions = {}
 
+# Global PubNub instance for publishing to frontend
+pubnub_publisher = None
+
 # PubNub Event Listener
 class BottleEventListener(SubscribeCallback):
+    def __init__(self, publisher):
+        super().__init__()
+        self.publisher = publisher 
     def presence(self, pubnub, presence):
         # Gets the UUID of who joined/left (bottle_001, flask_server)
         uuid = presence.uuid
@@ -49,7 +55,21 @@ class BottleEventListener(SubscribeCallback):
                     "UPDATE Bottle SET connected = TRUE, connectedAt = NOW() WHERE bottleID = %s",
                     (bottle_id,)
                 )
+                rows_affected = cursor.rowcount
                 conn.commit()
+
+                if rows_affected > 0:
+                    print(f"Bottle {bottle_id} marked as connected")
+                    
+                    # Publish connection status to frontend
+                    self._publish_to_frontend({
+                        "type": "connection_status",
+                        "bottleID": bottle_id,
+                        "connected": True,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                else:
+                    print(f"Bottle {bottle_id} not found in database")
             # When the Pi is offline
             elif action in ["leave", "timeout"]:
                 cursor.execute(
@@ -57,7 +77,15 @@ class BottleEventListener(SubscribeCallback):
                     (bottle_id,)
                 )
                 conn.commit()
+                print(f"Bottle {bottle_id} marked as disconnected")
 
+                # Publish disconnection to frontend
+                self._publish_to_frontend({
+                    "type": "connection_status",
+                    "bottleID": bottle_id,
+                    "connected": False,
+                    "timestamp": datetime.now().isoformat()
+                })
 
             if bottle_id in active_sessions:
                 self._end_drinking_session(bottle_id, cursor, conn)
@@ -175,28 +203,74 @@ class BottleEventListener(SubscribeCallback):
         )
         conn.commit()
 
+        # fetch totalIntake
+        cursor.execute(
+            """
+            SELECT totalIntake
+            FROM Intake 
+            WHERE bottleID = %s AND intakeDate = CURDATE()
+            """,
+            (bottle_id,)
+        )
+        result = cursor.fetchone()
+
+        if not result:
+            print(f"Error: No intake record found for {bottle_id} today!")
+            return
+
+        total_intake = int(result["totalIntake"])
+
+        # Publish water intake amount to frontend
+        self._publish_to_frontend({
+            "type": "intake_update",
+            "bottleID": bottle_id,
+            "totalIntake": total_intake,
+            "timestamp": datetime.now().isoformat()
+        })
+
+    def _publish_to_frontend(self, message):
+        frontend_channel = os.getenv("FRONTEND_PUBNUB_CHANNEL")
+        try:
+            result = self.publisher.publish().channel(frontend_channel).message(message).sync()
+            print(f"Published to frontend: {message}")
+            print(f"Status: {result.status.status_code}")
+        except Exception as e:
+            print(f"Failed to publish to frontend: {e}")
+
 if __name__ == "__main__":
-    # Configure PubNub
+    # Configure PubNub for subscribing (raw data from Pi)
     pnconfig = PNConfiguration()
     pnconfig.subscribe_key = os.getenv("SUBSCRIBE_KEY")
     pnconfig.uuid = "flask-server"
     pubnub = PubNub(pnconfig)
+
+    # Configure PubNub for publishing (clean data to frontend)
+    pnconfig_publisher = PNConfiguration()
+    pnconfig_publisher.publish_key = os.getenv("PUBLISH_KEY")
+    pnconfig_publisher.subscribe_key = os.getenv("SUBSCRIBE_KEY")
+    pnconfig_publisher.uuid = "flask-publisher"
+    pubnub_publisher = PubNub(pnconfig_publisher)
     
     # Start listener
-    listener = BottleEventListener()
+    listener = BottleEventListener(pubnub_publisher)
     pubnub.add_listener(listener)
+
+    # Channels
     channel = os.getenv("PUBNUB_CHANNEL")
+    frontend_channel = os.getenv("FRONTEND_PUBNUB_CHANNEL")
     
     print("="*60)
     print("🚀 PubNub Service Starting")
     print("="*60)
     print(f"   Subscribe Key: {os.getenv('SUBSCRIBE_KEY')[:15]}...")
     print(f"   UUID: {pnconfig.uuid}")
-    print(f"   Channel: {channel}")
+    print(f"   Raw Channel (subscribe): {channel}")
+    print(f"   Frontend Channel (publish): {frontend_channel}")
     print("="*60)
     
     pubnub.subscribe().channels([channel]).with_presence().execute()
     print(f"✅ Subscribed to '{channel}' with presence enabled")
+    print(f"✅ Publishing to '{frontend_channel}' for frontend updates")
     print("👂 Listening for events... (Press Ctrl+C to stop)")
     print()
     
