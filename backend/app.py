@@ -9,7 +9,6 @@ from flask_session import Session
 
 load_dotenv()
 
-# Load credentials from .env
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -37,12 +36,6 @@ def get_db_connection():
         password=DB_PASSWORD,
         database=DB_NAME
     )
-
-@app.route("/test")
-def test():
-    print("Hello, AWS!")
-    return "Hello, AWS!"
-
 
 # Register endpoint. Creates user and hashes password
 @app.route("/auth/register", methods=["POST"])
@@ -370,9 +363,5 @@ def update_user_settings():
     return jsonify({"success": True, "message": "Bottle settings have been updated successfully."}), 200
 
 
-
-# Add water intake and update totalIntake to user's water bottle (waiting on working hardware)
-# Disconnect water bottle (waiting on working hardware)
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

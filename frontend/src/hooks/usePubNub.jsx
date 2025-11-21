@@ -16,7 +16,7 @@ export default function usePubNub(userId) {
         })
 
         const channel = import.meta.env.VITE_FRONTEND_PUBNUB_CHANNEL
-            console.log("🔍 Subscribing to channel:", channel)
+        console.log("🔍 Subscribing to channel:", channel)
         const listener = {
             message: (event) => {
                 const message = event.message
