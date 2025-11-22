@@ -1,5 +1,24 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
-import usePubNub from "../../hooks/usePubNub"
+// uncomment
+// import usePubNub from "../../hooks/usePubNub"
+
+const LoadingSpinner = ({ size = "h-8 w-8", color = "text-blue-500" }) => (
+    <svg className={`animate-spin ${size} ${color}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+)
+
+const ErrorMessage = ({ message }) => (
+    <div className="w-[293px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
+        <div className="flex items-start">
+            <svg className="h-5 w-5 text-red-400 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm">{message}</span>
+        </div>
+    </div>
+)
 
 const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -9,13 +28,19 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const [checkingDatabase, setCheckingDatabase] = useState(true)
     const [isPiOnline, setIsPiOnline] = useState(false)
 
-    const { bottleConnected: pubnubStatus, latestIntake } = usePubNub(userId)
+    // uncomment b4 commit 
+    // const { bottleConnected: pubnubStatus, latestIntake } = usePubNub(userId)
+    const pubnubStatus = false
+    const latestIntake = null
 
     const [error, setError] = useState(null)
     const [bottleName, setBottleName] = useState("")
     const [showAddBottleModal, setShowAddBottleModal] = useState(false)
-    const [newBottleName, setNewBottleName] = useState("")
+    const [newBottleId, setNewBottleId] = useState("")
     const [addingBottle, setAddingBottle] = useState(false)
+    const [bottleIdVerified, setBottleIdVerified] = useState(false)
+    const [newBottleName, setNewBottleName] = useState("")
+    const [newGoal, setNewGoal] = useState("2000")
 
     // Daily intake data
     const [dailyGoal, setDailyGoal] = useState(2000) // ml
@@ -33,17 +58,13 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
         day: 'numeric'
     })
 
-    // Update connection status
+    // Handle real-time updates from PubNub
     useEffect(() => {
         setIsPiOnline(pubnubStatus)
-    }, [pubnubStatus])
-
-    // Handle real-time intake updates
-    useEffect(() => {
         if (latestIntake) {
             setCurrentIntake(latestIntake.total)
         }
-    }, [latestIntake])
+    }, [pubnubStatus, latestIntake])
 
     // Function to fetch bottle data (name and goal)
     const fetchBottleData = async () => {
@@ -139,15 +160,95 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
         }
     }, [hasBottleInDB, onConnectionChange])
 
+    const handleVerifyBottleId = async () => {
+        if (!newBottleId.trim()) {
+            setError("Please enter a bottle ID")
+            return
+        }
+
+        setAddingBottle(true)
+        setError(null)
+
+        try {
+            // Check if bottle ID exists
+            const response = await fetch(
+                `${API_URL}/api/water_bottle?bottleID=${encodeURIComponent(newBottleId)}`,
+                { credentials: "include" }
+            )
+            console.log(newBottleId)
+            const data = await response.json()
+            
+            if (response.ok && data.success) {
+                console.log("Bottle ID verified:", data)
+                setBottleIdVerified(true)
+            } else {
+                setError(data.message || "Bottle ID not found")
+            }
+        } catch (error) {
+            console.error("Error checking bottle:", error)
+            setError("Failed to verify bottle ID")
+        } finally {
+            setAddingBottle(false)
+        }
+    }
+
     const handleAddNewBottle = async () => {
         if (!newBottleName.trim()) {
             setError("Please enter a bottle name")
             return
         }
+        
+        if (!newGoal || parseFloat(newGoal) <= 0) {
+            setError("Please enter a valid daily goal")
+            return
+        }
 
-        setShowAddBottleModal(false)
-        setNewBottleName("")
+        setAddingBottle(true)
         setError(null)
+
+        try {
+            const response = await fetch(`${API_URL}/api/user/water_bottle/register`, {
+                method: "PUT",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    bottleID: newBottleId,
+                    bottleName: newBottleName.trim(),
+                    goal: parseFloat(newGoal)
+                })
+            })
+
+            const data = await response.json()
+
+            if (response.ok && data.success) {
+                // Successfully registered bottle
+                setShowAddBottleModal(false)
+                resetModal()
+                
+                // Refresh the page to show the newly registered bottle
+                window.location.reload()
+            } else {
+                setError(data.message || "Failed to register bottle")
+            }
+        } catch (error) {
+            console.error("Error registering bottle:", error)
+            setError("Failed to register bottle")
+        } finally {
+            setAddingBottle(false)
+        }
+    }
+
+    const resetModal = () => {
+        setNewBottleId("")
+        setNewBottleName("")
+        setNewGoal("2000")
+        setBottleIdVerified(false)
+        setError(null)
+    }
+
+    const handleCloseModal = () => {
+        setShowAddBottleModal(false)
+        resetModal()
     }
 
     return (
@@ -158,9 +259,14 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                 ${showAddBottleModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
             `}>
                 <div className="w-[350px] bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/40 dark:border-slate-700/40">
-                    <h3 className="text-[24px] font-bold text-gray-900 dark:text-gray-100 mb-2">No Bottle Found</h3>
+                    <h3 className="text-[24px] font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        {bottleIdVerified ? "Setup Your Bottle" : "Add New Bottle"}
+                    </h3>
                     <p className="text-[14px] text-gray-600 dark:text-gray-400 mb-6">
-                        Would you like to connect a new bottle? Enter a name for your bottle below.
+                        {bottleIdVerified 
+                            ? "Enter a name for your bottle and set your daily hydration goal."
+                            : "Enter the ID found underneath the device to register your H2Now bottle."
+                        }
                     </p>
 
                     {error && (
@@ -174,50 +280,107 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                         </div>
                     )}
 
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Bottle Name
-                        </label>
-                        <input
-                            type="text"
-                            value={newBottleName}
-                            onChange={(e) => setNewBottleName(e.target.value)}
-                            placeholder="e.g., My H2Now Bottle"
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            disabled={addingBottle}
-                        />
-                    </div>
+                    {!bottleIdVerified ? (
+                        // Step 1: Enter Bottle ID
+                        <>
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Bottle ID
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newBottleId}
+                                    onChange={(e) => setNewBottleId(e.target.value)}
+                                    placeholder="Enter bottle ID"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    disabled={addingBottle}
+                                />
+                            </div>
 
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => {
-                                setShowAddBottleModal(false)
-                                setNewBottleName("")
-                                setError(null)
-                            }}
-                            disabled={addingBottle}
-                            className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleAddNewBottle}
-                            disabled={addingBottle}
-                            className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-                        >
-                            {addingBottle ? (
-                                <>
-                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span>Adding...</span>
-                                </>
-                            ) : (
-                                "Add Bottle"
-                            )}
-                        </button>
-                    </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleCloseModal}
+                                    disabled={addingBottle}
+                                    className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleVerifyBottleId}
+                                    disabled={addingBottle}
+                                    className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                                >
+                                    {addingBottle ? (
+                                        <>
+                                            <LoadingSpinner size="h-4 w-4" color="text-white" />
+                                            <span>Verifying...</span>
+                                        </>
+                                    ) : (
+                                        "Next"
+                                    )}
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        // Step 2: Enter Bottle Name and Goal
+                        <>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Bottle Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newBottleName}
+                                    onChange={(e) => setNewBottleName(e.target.value)}
+                                    placeholder="e.g., My H2Now Bottle"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    disabled={addingBottle}
+                                />
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Daily Goal (ml)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={newGoal}
+                                    onChange={(e) => setNewGoal(e.target.value)}
+                                    placeholder="2000"
+                                    min="1"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    disabled={addingBottle}
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setBottleIdVerified(false)
+                                        setError(null)
+                                    }}
+                                    disabled={addingBottle}
+                                    className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
+                                >
+                                    Back
+                                </button>
+                                <button
+                                    onClick={handleAddNewBottle}
+                                    disabled={addingBottle}
+                                    className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                                >
+                                    {addingBottle ? (
+                                        <>
+                                            <LoadingSpinner size="h-4 w-4" color="text-white" />
+                                            <span>Registering...</span>
+                                        </>
+                                    ) : (
+                                        "Register Bottle"
+                                    )}
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -233,10 +396,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                     {loadingIntake ? (
                         <div className="flex items-center justify-center py-8">
-                            <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                            <LoadingSpinner />
                         </div>
                     ) : (
                         <div className="flex items-center justify-between">
@@ -274,10 +434,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                         // Checking Connection State
                         <div className="flex flex-col items-center gap-6">
                             <div className="w-[200px] h-[280px] flex items-center justify-center">
-                                <svg className="animate-spin h-12 w-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
+                                <LoadingSpinner size="h-12 w-12" />
                             </div>
                             <p className="text-[16px] font-medium text-gray-600 dark:text-gray-300">
                                 Loading...
@@ -312,41 +469,19 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                                 No Bottle Registered
                             </p>
 
-                            {error && (
-                                <div className="w-[293px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
-                                    <div className="flex items-start">
-                                        <svg className="h-5 w-5 text-red-400 dark:text-red-400 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                        </svg>
-                                        <span className="text-sm">{error}</span>
-                                    </div>
-                                </div>
-                            )}
+                            {error && <ErrorMessage message={error} />}
 
-                            {/* <button
-                                onClick={handleConnectBottle}
-                                disabled={connecting}
-                                className="w-[200px] h-[50px] bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+                            <button
+                                onClick={() => setShowAddBottleModal(true)}
+                                className="w-[200px] h-[50px] bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
                             >
-                                {connecting ? (
-                                    <>
-                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        <span>Connecting...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        <span>Connect Bottle</span>
-                                    </>
-                                )}
-                            </button> */}
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Register Bottle</span>
+                            </button>
                         </div>
-                    ) : hasBottleInDB ? (
+                    ) : (
                         // State 2 & 3: Bottle Exists (Connected or Disconnected)
                         <div className="flex flex-col items-center gap-6">
                             {/* Bottle Visualization with Water Level */}
@@ -437,18 +572,9 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                             )}
 
                             {/* Error Message */}
-                            {error && (
-                                <div className="w-[293px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
-                                    <div className="flex items-start">
-                                        <svg className="h-5 w-5 text-red-400 dark:text-red-400 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                        </svg>
-                                        <span className="text-sm">{error}</span>
-                                    </div>
-                                </div>
-                            )}
+                            {error && <ErrorMessage message={error} />}
                         </div>
-                    ) : null}
+                    )}
                 </div>
             </div>
         </>
