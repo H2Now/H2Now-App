@@ -1,6 +1,5 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
-// uncomment
-// import usePubNub from "../../hooks/usePubNub"
+import usePubNub from "../../hooks/usePubNub"
 
 const LoadingSpinner = ({ size = "h-8 w-8", color = "text-blue-500" }) => (
     <svg className={`animate-spin ${size} ${color}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -27,11 +26,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const [hasBottleInDB, setHasBottleInDB] = useState(false)
     const [checkingDatabase, setCheckingDatabase] = useState(true)
     const [isPiOnline, setIsPiOnline] = useState(false)
-
-    // uncomment b4 commit 
-    // const { bottleConnected: pubnubStatus, latestIntake } = usePubNub(userId)
-    const pubnubStatus = false
-    const latestIntake = null
+    const { bottleConnected: pubnubStatus, latestIntake } = usePubNub(userId)
 
     const [error, setError] = useState(null)
     const [bottleName, setBottleName] = useState("")
