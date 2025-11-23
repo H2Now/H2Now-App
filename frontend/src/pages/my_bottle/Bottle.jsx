@@ -48,7 +48,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     // Function to fetch bottle data (name and goal)
     const fetchBottleData = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/user/water_bottle`, {
+            const res = await fetch(`${API_URL}/user/water_bottle`, {
                 credentials: "include",
             })
             const data = await res.json()
@@ -59,7 +59,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
             }
 
             // Also fetch today's intake to recalculate water level
-            const intakeRes = await fetch(`${API_URL}/api/user/water_bottle/intake/today`, {
+            const intakeRes = await fetch(`${API_URL}/user/water_bottle/intake/today`, {
                 credentials: "include",
             })
             const intakeData = await intakeRes.json()
@@ -82,7 +82,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
             setCheckingDatabase(true)
             try {
                 // get userID for pubnub
-                const userRes = await fetch(`${API_URL}/api/user`, {
+                const userRes = await fetch(`${API_URL}/user`, {
                     credentials: "include",
                 })
                 const userData = await userRes.json()
@@ -91,7 +91,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                     setUserId(userData.user.id)
                 }
                 // get bottle data
-                const bottleRes = await fetch(`${API_URL}/api/user/water_bottle`, {
+                const bottleRes = await fetch(`${API_URL}/user/water_bottle`, {
                     credentials: "include",
                 })
                 const bottleData = await bottleRes.json()
@@ -114,7 +114,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
         const fetchTodayIntake = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/user/water_bottle/intake/today`, {
+                const res = await fetch(`${API_URL}/user/water_bottle/intake/today`, {
                     credentials: "include",
                 })
                 const data = await res.json()

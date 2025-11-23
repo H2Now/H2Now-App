@@ -20,7 +20,7 @@ export default function Account() {
         // fetch current user profile
         const fetchUser = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/user`, {
+                const res = await fetch(`${API_URL}/user`, {
                     credentials: "include",
                 })
                 const data = await res.json()
@@ -126,7 +126,7 @@ export default function Account() {
                                                     setMessage(null)
                                                     try {
                                                         const payload = { name: form.name }
-                                                        const res = await fetch(`${API_URL}/api/user`, {
+                                                        const res = await fetch(`${API_URL}/user`, {
                                                             method: 'PUT',
                                                             headers: { 'Content-Type': 'application/json' },
                                                             credentials: 'include',
@@ -216,7 +216,7 @@ export default function Account() {
                                                     try {
                                                         const payload = {}
                                                         if (form.password) payload.password = form.password
-                                                        const res = await fetch(`${API_URL}/api/user`, {
+                                                        const res = await fetch(`${API_URL}/user`, {
                                                             method: 'PUT',
                                                             headers: { 'Content-Type': 'application/json' },
                                                             credentials: 'include',

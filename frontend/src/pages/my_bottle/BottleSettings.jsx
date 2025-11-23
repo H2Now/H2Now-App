@@ -21,7 +21,7 @@ export default function BottleSettings({ onDataChange }) {
 
     const fetchBottleData = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/user/water_bottle`, {
+            const res = await fetch(`${API_URL}/user/water_bottle`, {
                 credentials: "include",
             })
 
@@ -110,7 +110,7 @@ export default function BottleSettings({ onDataChange }) {
                 ? { bottleName: inputValue.trim() }
                 : { goal: parseFloat(inputValue) }
 
-            const res = await fetch(`${API_URL}/api/user/water_bottle/settings`, {
+            const res = await fetch(`${API_URL}/user/water_bottle/settings`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -147,7 +147,7 @@ export default function BottleSettings({ onDataChange }) {
             setError("")
 
             try {
-                const res = await fetch(`${API_URL}/api/user/water_bottle/intake/reset`, {
+                const res = await fetch(`${API_URL}/user/water_bottle/intake/reset`, {
                     method: "POST",
                     credentials: "include",
                 })
