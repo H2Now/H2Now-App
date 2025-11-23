@@ -15,7 +15,14 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173", "http://www.h2now.online", "https://www.h2now.online"], supports_credentials=True)
+CORS(app, origins=[
+    "http://localhost:5173", 
+    "http://www.h2now.online", 
+    "https://www.h2now.online",
+    "https://h2now.online",
+    "www.h2now.online",
+    "h2now.online"
+], supports_credentials=True)
 
 app.secret_key = os.getenv("SECRET_KEY")
 
