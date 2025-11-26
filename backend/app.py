@@ -28,7 +28,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 
 # stores the session id in a file system (folder called flask_session)
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = "/var/www/H2Now-App/backend/flask_session"
+app.config["SESSION_FILE_DIR"] = os.getenv("SESSION_FILE_DIR")
 # uses secret key to sign the cookies
 app.config["SESSION_USE_SIGNER"] = True
 app.config["SESSION_PERMANENT"] = False
@@ -146,6 +146,7 @@ def logout():
 def check_session():
     if "user_id" in session:
         return jsonify({"logged_in": True, "user_id": session["user_id"]}), 200
+    print("invalid")
     return jsonify({"logged_in": False}), 200
 
 
