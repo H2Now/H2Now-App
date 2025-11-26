@@ -15,13 +15,20 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173", "http://www.h2now.online", "https://www.h2now.online"], supports_credentials=True)
+CORS(app, origins=[
+    "http://localhost:5173", 
+    "http://www.h2now.online", 
+    "https://www.h2now.online",
+    "https://h2now.online",
+    "www.h2now.online",
+    "h2now.online"
+], supports_credentials=True)
 
 app.secret_key = os.getenv("SECRET_KEY")
 
 # stores the session id in a file system (folder called flask_session)
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = "/var/www/H2Now-App/backend/flask_session"
+app.config["SESSION_FILE_DIR"] = os.getenv("SESSION_FILE_DIR")
 # uses secret key to sign the cookies
 app.config["SESSION_USE_SIGNER"] = True
 app.config["SESSION_PERMANENT"] = False
@@ -88,7 +95,7 @@ def register():
 
 
 # Login endpoint. Verifies email and password hash
-@app.route("/api/auth/login", methods=["POST"])
+@app.route("/auth/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True)
 
@@ -128,22 +135,23 @@ def login():
 
 
 # Logout endpoint
-@app.route("/api/auth/logout", methods=["GET"])
+@app.route("/auth/logout", methods=["GET"])
 def logout():
     session.clear()
     return jsonify({"success": True, "message": "Logged out successfully"}), 200
 
 
 # Check if session cookie exists
-@app.route("/api/auth/check_session", methods=["GET"])
+@app.route("/auth/check_session", methods=["GET"])
 def check_session():
     if "user_id" in session:
         return jsonify({"logged_in": True, "user_id": session["user_id"]}), 200
+    print("invalid")
     return jsonify({"logged_in": False}), 200
 
 
 # Get current user profile
-@app.route("/api/user", methods=["GET"])
+@app.route("/user", methods=["GET"])
 def get_user():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
@@ -165,7 +173,7 @@ def get_user():
 
 
 # Update current user (name and/or password)
-@app.route("/api/user", methods=["PUT"])
+@app.route("/user", methods=["PUT"])
 def update_user():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
@@ -218,7 +226,7 @@ def update_user():
 
 
 # Get user's water bottle
-@app.route("/api/user/water_bottle", methods=["GET"])
+@app.route("/user/water_bottle", methods=["GET"])
 def get_water_bottle():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
@@ -240,7 +248,7 @@ def get_water_bottle():
 
 
 # Get user's intake for today 
-@app.route("/api/user/water_bottle/intake/today", methods=["GET"])
+@app.route("/user/water_bottle/intake/today", methods=["GET"])
 def get_today_intake():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
@@ -266,7 +274,7 @@ def get_today_intake():
 
 
 # Reset user's intake for today
-@app.route("/api/user/water_bottle/intake/reset", methods=["POST"])
+@app.route("/user/water_bottle/intake/reset", methods=["POST"])
 def reset_water_intake():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401
@@ -293,7 +301,7 @@ def reset_water_intake():
 
 
 # Make edits to bottle name, bottle capacity, and daily goal
-@app.route("/api/user/water_bottle/settings", methods=["PATCH"])
+@app.route("/user/water_bottle/settings", methods=["PATCH"])
 def update_user_settings():
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Not authenticated"}), 401

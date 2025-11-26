@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 
 function ProtectedRoute() {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000' 
     const [isChecking, setIsChecking] = useState(true);
     const [authorized, setAuthorized] = useState(false);
 
@@ -10,7 +11,7 @@ function ProtectedRoute() {
         let isMounted = true;
         const checkAuth = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/auth/check_session", {
+                const res = await fetch(`${API_URL}/auth/check_session`, {
                     credentials: "include",
                 })
                 const data = await res.json();

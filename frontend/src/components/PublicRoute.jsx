@@ -10,7 +10,7 @@ function PublicRoute() {
         let isMounted = true;
         const checkAuth = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/auth/check_session", {
+                const res = await fetch(`${API_URL}/auth/check_session`, {
                     credentials: "include",
                 })
                 const data = await res.json();
