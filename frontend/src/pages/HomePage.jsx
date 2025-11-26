@@ -1,4 +1,5 @@
 // import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 function HomePage() {
@@ -37,6 +38,18 @@ function HomePage() {
                     >
                         Get Started
                     </motion.button>
+                    <Link to="/hub">
+                        <motion.button
+                            className="bg-blue-600 text-white px-8 py-4 mt-8 rounded-lg
+                            transition-all duration-300 ease-in-out
+                            hover:opacity-80 hover:translate-x-1 hover:translate-y-1"
+                            initial={{ opacity: 0, y: 0 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                        >
+                            Get Started
+                        </motion.button>
+                    </Link>
                 </div>
             </div>
             <div className="py-20">

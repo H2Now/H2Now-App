@@ -53,16 +53,20 @@ export default function Account() {
                     <p className="text-gray-700 dark:text-gray-200 text-[16px] text-center">Are you sure you want to log out?</p>
                     <div className="w-full pt-[15px] flex justify-center gap-4">
                         <button
-                            className="w-[125px] h-[44px] bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
-                            onClick={() => setModal(false)}
-                        >
-                            <img src={Back} className="w-6 h-6 mr-2" />
-                            <span className="text-gray-900 dark:text-gray-100">Go Back</span>
-                        </button>
-
-                        <button
                             className="w-[125px] h-[44px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
-                            onClick={() => setModal(false)}
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch(`${API_URL}/api/auth/logout`, {
+                                        credentials: "include",
+                                    })
+                                    if (res.ok) {
+                                        // Redirect to login page after successful logout
+                                        window.location.href = "/"
+                                    }
+                                } catch (err) {
+                                    console.error("Logout failed:", err)
+                                }
+                            }}
                         >
                             <img src={Logout} className="w-6 h-6 mr-2" />
                             <span className="text-white">Log Out</span>
