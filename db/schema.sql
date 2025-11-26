@@ -28,9 +28,9 @@ CREATE TABLE User (
 CREATE TABLE Bottle (
     bottleID VARCHAR(50) PRIMARY KEY,
     userID INT UNIQUE,
-    bottleName VARCHAR(150) NOT NULL,
+    bottleName VARCHAR(150),
+    goal DECIMAL(6,2),
     capacity DECIMAL(6,2) NOT NULL,
-    goal DECIMAL(6,2) NOT NULL,
     connected BOOLEAN DEFAULT FALSE,
     connectedAt DATETIME,
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
