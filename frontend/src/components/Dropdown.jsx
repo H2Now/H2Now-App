@@ -37,7 +37,7 @@ export default function Dropdown() {
                     </div>
 
                     <div className={`${!notifications ? 'opacity-70 pointer-events-none dark:opacity-70' : ''} h-[40px] flex items-center justify-between mt-3` }>
-                        <p className={`${!notifications ? 'text-gray-500 dark:text-gray-200' : 'text-gray-800 dark:text-gray-100'} text-[14px]`}>Bottle Vibration</p>
+                        <p className={`${!notifications ? 'text-gray-500 dark:text-gray-200' : 'text-gray-800 dark:text-gray-100'} text-[14px]`}>Bottle Sound Alerts</p>
                         <Switch state={vibration} setState={setVibration} />
                     </div>
 
