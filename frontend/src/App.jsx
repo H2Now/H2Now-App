@@ -6,8 +6,6 @@ import Settings from "./pages/hub_pages/Settings"
 import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
-import ProtectedRoute from "./components/ProtectedRoute"
-import PublicRoute from "./components/PublicRoute"
 
 function App() {
 	const location = useLocation();

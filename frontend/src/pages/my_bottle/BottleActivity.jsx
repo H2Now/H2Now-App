@@ -104,22 +104,22 @@ export default function BottleStatistics() {
     }
 
     return (
-        <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-5 lg:gap-6">
             {/* Date Input and Fetch Button */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 lg:gap-4">
                 <div className="flex-1 relative">
                     <input
                         type="text"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         onFocus={() => setShowCalendar(true)}
-                        placeholder="Enter date"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Select a date"
+                        className="w-full px-4 py-3 lg:px-5 lg:py-4 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-900 dark:text-gray-100 text-base lg:text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
 
                     {/* Calendar Dropdown */}
                     {showCalendar && (
-                        <div className="absolute top-full mt-2 left-0 w-full bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 z-50">
+                        <div className="absolute top-full mt-2 left-0 w-full lg:w-[400px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-4 lg:p-6 z-50">
                             {/* Calendar Header */}
                             <div className="flex items-center justify-between mb-4">
                                 <button
@@ -170,42 +170,43 @@ export default function BottleStatistics() {
 
                 <button
                     onClick={handleFetch}
-                    className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 shadow-md"
+                    className="px-6 py-3 lg:px-8 lg:py-4 bg-green-500 hover:bg-green-600 text-white font-semibold text-base lg:text-lg rounded-xl transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg"
                 >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
+                    <span className="hidden lg:inline">Fetch</span>
                 </button>
             </div>
 
             {/* Activity Table */}
             <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Activity</h3>
+                <div className="px-6 lg:px-8 py-4 lg:py-5 border-b border-gray-200 dark:border-slate-700">
+                    <h3 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100">Activity</h3>
                 </div>
 
                 {/* Table Header */}
-                <div className="grid grid-cols-3 gap-4 px-6 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
-                    <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">Time</div>
-                    <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">Intake</div>
-                    <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">Progress</div>
+                <div className="grid grid-cols-3 gap-4 lg:gap-6 px-6 lg:px-8 py-3 lg:py-4 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
+                    <div className="text-sm lg:text-base font-semibold text-gray-600 dark:text-gray-300">Time</div>
+                    <div className="text-sm lg:text-base font-semibold text-gray-600 dark:text-gray-300">Intake</div>
+                    <div className="text-sm lg:text-base font-semibold text-gray-600 dark:text-gray-300">Progress</div>
                 </div>
 
                 {/* Table Body */}
                 <div className="divide-y divide-gray-200 dark:divide-slate-700">
                     {activityData.map((activity, index) => (
-                        <div key={index} className="grid grid-cols-3 gap-4 px-6 py-4 hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                            <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                        <div key={index} className="grid grid-cols-3 gap-4 lg:gap-6 px-6 lg:px-8 py-4 lg:py-5 hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                            <div className="text-sm lg:text-base text-gray-700 dark:text-gray-300 font-medium">
                                 {activity.time}
                             </div>
-                            <div className={`text-sm font-semibold ${
+                            <div className={`text-sm lg:text-base font-semibold ${
                                 activity.isPositive 
                                     ? "text-green-600 dark:text-green-400" 
                                     : "text-red-600 dark:text-red-400"
                             }`}>
                                 {activity.change}
                             </div>
-                            <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                            <div className="text-sm lg:text-base text-gray-700 dark:text-gray-300 font-medium">
                                 {activity.progress}
                             </div>
                         </div>
