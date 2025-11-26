@@ -1,5 +1,23 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
-import usePubNub from "../../hooks/usePubNub"
+// import usePubNub from "../../hooks/usePubNub"
+
+const LoadingSpinner = ({ size = "h-8 w-8", color = "text-blue-500" }) => (
+    <svg className={`animate-spin ${size} ${color}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+)
+
+const ErrorMessage = ({ message }) => (
+    <div className="w-[293px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
+        <div className="flex items-start">
+            <svg className="h-5 w-5 text-red-400 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm">{message}</span>
+        </div>
+    </div>
+)
 
 const LoadingSpinner = ({ size = "h-8 w-8", color = "text-blue-500" }) => (
     <svg className={`animate-spin ${size} ${color}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -381,11 +399,41 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
             </div>
 
             {/* Bottle and Overview - Responsive Layout */}
-            {/* Mobile: Stacked vertically | Desktop: Side-by-side with enhanced cards */}
-            <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-10 w-full max-w-7xl">
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 w-full max-w-7xl">
 
-                {/* Bottle Visualization Section - Shows first on mobile, left on desktop */}
-                <div className="flex flex-col items-center gap-5 lg:order-2">
+                {/* Daily Goal Overview */}
+                <div className="w-full max-w-[380px] lg:w-[420px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-gray-100">Today's Goal</h3>
+                        <span className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">{today}</span>
+                    </div>
+
+                    {loadingIntake ? (
+                        <div className="flex items-center justify-center py-12">
+                            <LoadingSpinner size="h-10 w-10" />
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
+                                    {currentIntake}ml
+                                </p>
+                                <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">of {dailyGoal}ml</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-3xl lg:text-4xl font-bold text-gray-700 dark:text-gray-300">
+                                    {intakePercentage}%
+                                </p>
+                                <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">
+                                    {dailyGoal - currentIntake > 0 ? `${dailyGoal - currentIntake}ml to go` : 'Goal reached! 🎉'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Bottle Visualization Section with Name */}
+                <div className="flex flex-col items-center gap-5">
                     {/* Bottle Name Badge - Only show when bottle exists */}
                     {hasBottleInDB && bottleName && (
                         <div className="px-5 py-2.5 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/40 dark:to-cyan-900/40 

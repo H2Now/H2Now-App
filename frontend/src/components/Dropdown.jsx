@@ -6,7 +6,8 @@ export default function Dropdown() {
     const [open, setOpen] = useState(false),
         [notifications, setNotifications] = useState(false),
         [vibration, setVibration] = useState(false),
-        [alerts, setAlerts] = useState(false)
+        [alerts, setAlerts] = useState(false),
+        [reminderFrequency, setReminderFrequency] = useState(1)
 
     return (
         <>
@@ -44,6 +45,50 @@ export default function Dropdown() {
                     <div className={`${!notifications ? 'opacity-70 pointer-events-none dark:opacity-70' : ''} h-[40px] flex items-center justify-between mt-3`}>
                         <p className={`${!notifications ? 'text-gray-500 dark:text-gray-200' : 'text-gray-800 dark:text-gray-100'} text-[14px]`}>Application Alerts</p>
                         <Switch state={alerts} setState={setAlerts} />
+                    </div>
+
+                    <div className={`${!notifications ? 'opacity-70 pointer-events-none dark:opacity-70' : ''} mt-4 pt-3 border-t border-gray-200 dark:border-slate-600`}>
+                        <label className={`${!notifications ? 'text-gray-500 dark:text-gray-200' : 'text-gray-800 dark:text-gray-100'} text-[14px] block mb-2`}>
+                            Reminder Frequency
+                        </label>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setReminderFrequency(Math.max(1, reminderFrequency - 1))}
+                                    disabled={!notifications || reminderFrequency <= 1}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                                        !notifications || reminderFrequency <= 1
+                                            ? 'bg-gray-100 dark:bg-slate-600/50 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 active:scale-95'
+                                    }`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div className={`${!notifications ? 'bg-gray-100 dark:bg-slate-600/50' : 'bg-white dark:bg-slate-600'} min-w-[60px] px-3 py-2 text-center text-[16px] font-semibold text-gray-800 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-slate-500`}>
+                                    {reminderFrequency}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setReminderFrequency(Math.min(24, reminderFrequency + 1))}
+                                    disabled={!notifications || reminderFrequency >= 24}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                                        !notifications || reminderFrequency >= 24
+                                            ? 'bg-gray-100 dark:bg-slate-600/50 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 active:scale-95'
+                                    }`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span className={`${!notifications ? 'text-gray-500 dark:text-gray-200' : 'text-gray-600 dark:text-gray-300'} text-[14px]`}>
+                                hour{reminderFrequency !== 1 ? 's' : ''}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
