@@ -146,6 +146,7 @@ def logout():
 def check_session():
     if "user_id" in session:
         return jsonify({"logged_in": True, "user_id": session["user_id"]}), 200
+    print("invalid")
     return jsonify({"logged_in": False}), 200
 
 

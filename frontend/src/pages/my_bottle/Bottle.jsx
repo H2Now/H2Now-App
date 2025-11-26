@@ -365,12 +365,81 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                     </div>
 
                     {/* Water Level Bottle */}
-                    <div className="relative h-48 w-24 mx-auto flex items-end">
-                        <div className="absolute inset-0 border-4 border-blue-400 rounded-b-xl rounded-t-lg overflow-hidden">
-                            <div
-                                className="bg-blue-300 dark:bg-blue-600 w-full transition-all duration-500"
-                                style={{ height: `${waterLevel}%` }}
-                            ></div>
+                    <div className="relative h-64 w-48 mx-auto">
+                        <svg viewBox="0 0 200 280" className="w-full h-full">
+                            {/* Bottle Cap */}
+                            <rect x="70" y="10" width="60" height="30" rx="4"
+                                className={isPiOnline
+                                    ? "fill-blue-400 dark:fill-blue-500 stroke-blue-500 dark:stroke-blue-600"
+                                    : "fill-gray-400 dark:fill-gray-500 stroke-gray-500 dark:stroke-gray-600"
+                                } strokeWidth="2" />
+
+                            {/* Bottle Outline */}
+                            <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z"
+                                className={isPiOnline
+                                    ? "fill-white/30 dark:fill-slate-700/30 stroke-blue-400 dark:stroke-blue-500"
+                                    : "fill-white/30 dark:fill-slate-700/30 stroke-gray-400 dark:stroke-gray-500"
+                                } strokeWidth="3" />
+
+                            {/* Water Level */}
+                            <defs>
+                                <clipPath id="bottleClip">
+                                    <path d="M 80 40 L 80 70 L 50 90 L 50 250 C 50 265 65 270 100 270 C 135 270 150 265 150 250 L 150 90 L 120 70 L 120 40 Z" />
+                                </clipPath>
+                            </defs>
+                            <rect
+                                x="50"
+                                y={270 - (waterLevel / 100 * 230)}
+                                width="100"
+                                height={(waterLevel / 100 * 230)}
+                                className={isPiOnline
+                                    ? "fill-blue-400/60 dark:fill-blue-500/60"
+                                    : "fill-gray-400/60 dark:fill-gray-500/60"
+                                }
+                                clipPath="url(#bottleClip)"
+                            />
+
+                            {/* Water Surface Wave */}
+                            <path
+                                d={`M 50 ${270 - (waterLevel / 100 * 230)} Q 75 ${270 - (waterLevel / 100 * 230) - 3} 100 ${270 - (waterLevel / 100 * 230)} T 150 ${270 - (waterLevel / 100 * 230)}`}
+                                className={isPiOnline
+                                    ? "fill-none stroke-blue-500 dark:stroke-blue-400"
+                                    : "fill-none stroke-gray-500 dark:stroke-gray-400"
+                                }
+                                strokeWidth="2"
+                                clipPath="url(#bottleClip)"
+                            />
+
+                            {/* Shine effect */}
+                            <ellipse cx="75" cy="140" rx="15" ry="40" className="fill-white/30 dark:fill-white/20" />
+                        </svg>
+
+                        {/* Status Indicator */}
+                        <div className="absolute top-2 right-2 flex items-center gap-1">
+                            {isPiOnline ? (
+                                <span className="relative flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                </span>
+                            ) : (
+                                <span className="relative flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Water Level Percentage */}
+                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                            <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full ${isPiOnline
+                                ? "border border-blue-200 dark:border-blue-700"
+                                : "border border-gray-200 dark:border-gray-700"
+                                }`}>
+                                <p className={`text-sm font-bold ${isPiOnline
+                                    ? "text-blue-600 dark:text-blue-400"
+                                    : "text-gray-600 dark:text-gray-400"
+                                    }`}>{waterLevel}%</p>
+                            </div>
                         </div>
                     </div>
 
