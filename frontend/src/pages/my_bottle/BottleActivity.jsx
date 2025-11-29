@@ -1,48 +1,93 @@
-import { progress } from "framer-motion"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function BottleStatistics() {
-    const [selectedDate, setSelectedDate] = useState("")
+
+    // Helper to get current date 
+    const getDateComponents = (date = new Date()) => ({
+        day: date.getDate(),
+        month: date.getMonth() + 1,
+        year: date.getFullYear(),
+        monthIndex: date.getMonth()
+    })
+
+    // Get current date in DD/MM/YYYY format for selectedDate
+    const getTodayFormatted = () => {
+        const { day, month, year } = getDateComponents()
+        return `${day}/${month}/${year}`
+    }
+
+    const [selectedDate, setSelectedDate] = useState(getTodayFormatted())
     const [showCalendar, setShowCalendar] = useState(false)
-    const [currentMonth, setCurrentMonth] = useState(new Date(2025, 10)) // hardcoded to nov 2025
+    const [currentMonth, setCurrentMonth] = useState(new Date()) // Set to current month
+    const [activityData, setActivityData] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
 
-    // Hardcoded activity data
-    const activityData = [
-        {
-            time: "8:15 PM",
-            change: "+10 ml",
-            progress: "1.4L / 2L",
-            isPositive: true
-        },
-        {
-            time: "1:45 PM",
-            change: "+250 ml",
-            progress: "1.25L / 2L",
-            isPositive: true
-        },
-        {
-            time: "1:30 PM",
-            change: "-246 ml",
-            progress: "1L / 2L",
-            isPositive: false
-        },
-        {
-            time: "10:26 AM",
-            change: "+298 ml",
-            progress: "3.44L / 2L",
-            isPositive: true
-        },
-        {
-            time: "10:00 AM",
-            change: "+150 ml",
-            progress: "850ml / 2L",
-            isPositive: true
+    // Convert date from DD/MM/YYYY to YYYY-MM-DD format for API
+    const formatDateForAPI = (dateStr) => {
+        if (!dateStr) return ""
+        const parts = dateStr.split("/")
+        if (parts.length !== 3) return ""
+        const [day, month, year] = parts
+        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
+    }
+
+    // Format intake value for display
+    const formatIntake = (ml) => {
+        if (ml >= 1000) {
+            return `${(ml / 1000).toFixed(2)}L`
         }
-    ]
+        return `${ml.toFixed(0)}ml`
+    }
 
-    const handleFetch = () => {
-        // TODO: Fetch activity data based on selectedDate
-        console.log("Fetching data for:", selectedDate)
+    const handleFetch = async () => {
+        if (!selectedDate) {
+            setError("Please select a date first")
+            return
+        }
+
+        setLoading(true)
+        setError("")
+
+        const apiDate = formatDateForAPI(selectedDate)
+        
+        try {
+            const response = await fetch(
+                `http://localhost:5000/user/water_bottle/activity?date=${apiDate}`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }
+            )
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to fetch activity data")
+            }
+
+            if (data.success) {
+                // Transform API data to match component format
+                const transformedData = data.activities.map((activity) => ({
+                    time: activity.time,
+                    change: activity.intake >= 0 ? `+${formatIntake(activity.intake)}` : formatIntake(activity.intake),
+                    progress: `${formatIntake(activity.progressAfter)} / ${formatIntake(activity.goal)}`,
+                    isPositive: activity.intake >= 0,
+                }))
+
+                setActivityData(transformedData)
+            } else {
+                setError(data.message || "Failed to load activity data")
+            }
+        } catch (err) {
+            console.error("Error fetching activity:", err)
+            setError(err.message || "Failed to fetch activity data")
+        } finally {
+            setLoading(false)
+        }
     }
 
     const daysInMonth = (date) => {
@@ -64,6 +109,14 @@ export default function BottleStatistics() {
         const totalDays = daysInMonth(currentMonth)
         const firstDay = getFirstDayOfMonth(currentMonth)
         const days = []
+        
+        const { month: currentMonthNum, year: currentYear } = getDateComponents(currentMonth)
+
+        // Parse selected date to check for highlighting
+        const selectedParts = selectedDate.split("/")
+        const selectedDay = selectedParts[0] ? parseInt(selectedParts[0]) : null
+        const selectedMonth = selectedParts[1] ? parseInt(selectedParts[1]) : null
+        const selectedYear = selectedParts[2] ? parseInt(selectedParts[2]) : null
 
         // Empty cells for days before the first day of month
         for (let i = 0; i < firstDay; i++) {
@@ -72,17 +125,21 @@ export default function BottleStatistics() {
 
         // Actual days
         for (let day = 1; day <= totalDays; day++) {
-            const isToday = day === 7 // Highlight day 7 just for demo
+            // Check if this day is selected
+            const isSelected = day === selectedDay && 
+                              currentMonthNum === selectedMonth && 
+                              currentYear === selectedYear
+            
             days.push(
                 <button
                     key={day}
                     onClick={() => {
-                        const dateStr = `${day}/${currentMonth.getMonth() + 1}/${currentMonth.getFullYear()}`
+                        const dateStr = `${day}/${currentMonthNum}/${currentYear}`
                         setSelectedDate(dateStr)
                         setShowCalendar(false)
                     }}
                     className={`h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all ${
-                        isToday
+                        isSelected
                             ? "bg-blue-500 text-white"
                             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
                     }`}
@@ -102,6 +159,11 @@ export default function BottleStatistics() {
     const handleNextMonth = () => {
         setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
     }
+
+    // Fetch activity data on component mount
+    useEffect(() => {
+        handleFetch()
+    }, [])
 
     return (
         <div className="w-full flex flex-col gap-5 lg:gap-6">
@@ -170,14 +232,44 @@ export default function BottleStatistics() {
 
                 <button
                     onClick={handleFetch}
-                    className="px-6 py-3 lg:px-8 lg:py-4 bg-green-500 hover:bg-green-600 text-white font-semibold text-base lg:text-lg rounded-xl transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg"
+                    disabled={loading || !selectedDate}
+                    className={`px-6 py-3 lg:px-8 lg:py-4 font-semibold text-base lg:text-lg rounded-xl transition-all duration-200 flex items-center gap-2 shadow-md ${
+                        loading || !selectedDate
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-green-500 hover:bg-green-600 hover:shadow-lg"
+                    } text-white`}
                 >
-                    <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span className="hidden lg:inline">Fetch</span>
+                    {loading ? (
+                        <>
+                            <svg className="animate-spin h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="hidden lg:inline">Loading...</span>
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <span className="hidden lg:inline">Search</span>
+                        </>
+                    )}
                 </button>
             </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
+                    <svg className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <h4 className="text-red-800 dark:text-red-300 font-semibold mb-1">Error</h4>
+                        <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+                    </div>
+                </div>
+            )}
 
             {/* Activity Table */}
             <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 overflow-hidden">
@@ -194,23 +286,34 @@ export default function BottleStatistics() {
 
                 {/* Table Body */}
                 <div className="divide-y divide-gray-200 dark:divide-slate-700">
-                    {activityData.map((activity, index) => (
-                        <div key={index} className="grid grid-cols-3 gap-4 lg:gap-6 px-6 lg:px-8 py-4 lg:py-5 hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                            <div className="text-sm lg:text-base text-gray-700 dark:text-gray-300 font-medium">
-                                {activity.time}
-                            </div>
-                            <div className={`text-sm lg:text-base font-semibold ${
-                                activity.isPositive 
-                                    ? "text-green-600 dark:text-green-400" 
-                                    : "text-red-600 dark:text-red-400"
-                            }`}>
-                                {activity.change}
-                            </div>
-                            <div className="text-sm lg:text-base text-gray-700 dark:text-gray-300 font-medium">
-                                {activity.progress}
-                            </div>
+                    {activityData.length === 0 ? (
+                        <div className="px-6 lg:px-8 py-12 text-center">
+                            <svg className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <p className="text-gray-500 dark:text-gray-400 text-base lg:text-lg">
+                                {selectedDate ? "No activity data for this date" : "Select a date and click Fetch to view activity"}
+                            </p>
                         </div>
-                    ))}
+                    ) : (
+                        activityData.map((activity, index) => (
+                            <div key={index} className="grid grid-cols-3 gap-4 lg:gap-6 px-6 lg:px-8 py-4 lg:py-5 hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                                <div className="text-sm lg:text-base text-gray-700 dark:text-gray-300 font-medium">
+                                    {activity.time}
+                                </div>
+                                <div className={`text-sm lg:text-base font-semibold ${
+                                    activity.isPositive 
+                                        ? "text-green-600 dark:text-green-400" 
+                                        : "text-red-600 dark:text-red-400"
+                                }`}>
+                                    {activity.change}
+                                </div>
+                                <div className="text-sm lg:text-base text-gray-700 dark:text-gray-300 font-medium">
+                                    {activity.progress}
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>
