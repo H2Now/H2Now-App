@@ -11,7 +11,7 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport import requests as google_requests
 
 # ONLY FOR DEV - comment this line if app is in PROD
-# os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 load_dotenv()
 
@@ -270,8 +270,9 @@ def logout():
 @app.route("/auth/check_session", methods=["GET"])
 def check_session():
     if "user_id" in session:
+        print("User is already logged in")
         return jsonify({"logged_in": True, "user_id": session["user_id"]}), 200
-    print("invalid")
+    print("User is not logged in")
     return jsonify({"logged_in": False}), 200
 
 

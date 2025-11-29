@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 function LoginPage() {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -48,28 +49,6 @@ function LoginPage() {
             } else {
                 console.log("Login successfully!");
                 setTimeout(() => navigate("/hub"), 1000)
-            }
-        } catch (error) {
-            alert("Something went wrong.. Please try again!");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    const handleGoogleLogin = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const res = await fetch(`${API_URL}/auth/login/google`, {
-                credentials: "include"
-            });
-            const data = await res.json();
-
-            if (!res.ok || !data.url) {
-                setError(data.message || "Something went wrong.. Please try again!");
-            } else {
-                window.location.href = data.url
             }
         } catch (error) {
             alert("Something went wrong.. Please try again!");
@@ -215,11 +194,7 @@ function LoginPage() {
                             {loading ? "Signing in..." : "Sign in"}
                         </button>
 
-                        <button 
-                            onClick={handleGoogleLogin} 
-                            disabled={loading}>
-                            Continue with Google
-                        </button>
+                        <GoogleAuthButton text="Sign in with Google"></GoogleAuthButton>
 
                         <div className="text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-300">
