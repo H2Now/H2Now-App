@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, session
+from flask import Flask, jsonify, request, session, redirect
 from flask_cors import CORS
 import mysql.connector
 from dotenv import load_dotenv
@@ -6,6 +6,12 @@ import os
 import bcrypt
 import re
 from flask_session import Session
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import Flow
+from google.auth.transport import requests as google_requests
+
+# ONLY FOR DEV - comment this line if app is in PROD
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 load_dotenv()
 
@@ -32,8 +38,33 @@ app.config["SESSION_FILE_DIR"] = os.getenv("SESSION_FILE_DIR")
 # uses secret key to sign the cookies
 app.config["SESSION_USE_SIGNER"] = True
 app.config["SESSION_PERMANENT"] = False
+# for prod
+# app.config["SESSION_COOKIE_DOMAIN"] = "h2now.online"
 
 Session(app)
+
+# Dev mode: use BACKEND_URL and FRONTEND_URL
+# Prod mode: use PROD URL to replace BACKEND_URL and FRONTEND_URL
+BACKEND_URL="http://localhost:5000"
+FRONTEND_URL="http://localhost:5173"
+PROD_URL="https://h2now.online"
+
+# Get Google's credentials
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+
+client_config = {
+    "web": {
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "redirect_uris": [
+            "http://localhost:5000/auth/login/google/callback",
+            "https://h2now.online/auth/login/google/callback"
+        ]
+    }
+}
 
 # Get DB credentials from .env and connect
 def get_db_connection():
@@ -134,6 +165,100 @@ def login():
     return jsonify({"success": False, "message": "Invalid login details"}), 400
 
 
+# Google Login endpoint
+@app.route("/auth/login/google", methods=["GET"])
+def google_login():
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", 
+            "https://www.googleapis.com/auth/userinfo.profile"],
+        redirect_uri=f"{BACKEND_URL}/auth/login/google/callback"
+    )
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true'
+    )
+    session["oauth_state"] = state
+
+    print(authorization_url)
+    return jsonify({"url": authorization_url}), 200
+
+
+# Google Login callback endpoint
+@app.route("/auth/login/google/callback", methods=["GET"])
+def google_callback():
+    state = session.get("oauth_state")
+
+    if not state:
+        print("error here")
+        return redirect(f"{FRONTEND_URL}/login?error=invalid_state")
+    
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=["openid", "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile"],
+        state=state,
+        redirect_uri=f"{BACKEND_URL}/auth/login/google/callback"
+    )
+
+    try:
+        flow.fetch_token(authorization_response=request.url)
+        credentials = flow.credentials
+        id_info = id_token.verify_oauth2_token(
+            credentials.id_token,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID
+        )
+
+        google_id = id_info["sub"]
+        email = id_info["email"]
+        name = id_info.get("name", "User")
+        profile_pic = id_info.get("picture")
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        try:
+            # Check if user exists by google_id
+            cursor.execute("SELECT * FROM User WHERE google_id=%s", [google_id])
+            user = cursor.fetchone()
+            
+            if not user:
+                # Check by email
+                cursor.execute("SELECT * FROM User WHERE email=%s", [email])
+                user = cursor.fetchone()
+                
+                if user:
+                    # Link existing account to Google
+                    cursor.execute(
+                        "UPDATE User SET google_id=%s, auth_provider='google', profilePic=%s WHERE userID=%s",
+                        [google_id, profile_pic, user["userID"]]
+                    )
+                    conn.commit()
+                else:
+                    # Create new user
+                    cursor.execute(
+                        """INSERT INTO User (email, google_id, auth_provider, name, profilePic) 
+                           VALUES (%s, %s, 'google', %s, %s)""",
+                        [email, google_id, name, profile_pic]
+                    )
+                    conn.commit()
+                    user_id = cursor.lastrowid
+                    user = {"userID": user_id, "email": email}
+            
+            # Set session
+            session["user_id"] = user["userID"]
+            session["email"] = user["email"]
+            print(f"Session set: user_id={session.get('user_id')}, email={session.get('email')}")  # DEBUG
+            
+            return redirect(f"{FRONTEND_URL}/hub")
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f"OAuth error: {e}")
+        return redirect(f"{FRONTEND_URL}/login?error=auth_failed")
+
 # Logout endpoint
 @app.route("/auth/logout", methods=["GET"])
 def logout():
@@ -145,8 +270,9 @@ def logout():
 @app.route("/auth/check_session", methods=["GET"])
 def check_session():
     if "user_id" in session:
+        print("User is already logged in")
         return jsonify({"logged_in": True, "user_id": session["user_id"]}), 200
-    print("invalid")
+    print("User is not logged in")
     return jsonify({"logged_in": False}), 200
 
 
@@ -160,7 +286,7 @@ def get_user():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT userID, name, email FROM User WHERE userID=%s", (user_id,))
+        cursor.execute("SELECT userID, name, email, profilePic FROM User WHERE userID=%s", (user_id,))
         user = cursor.fetchone()
     finally:
         cursor.close()
@@ -169,7 +295,7 @@ def get_user():
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
     
-    return jsonify({"success": True, "user": {"id": user["userID"], "name": user["name"], "email": user["email"]}}), 200
+    return jsonify({"success": True, "user": {"id": user["userID"], "name": user["name"], "email": user["email"], "profilePic": user["profilePic"]}}), 200
 
 
 # Update current user (name and/or password)

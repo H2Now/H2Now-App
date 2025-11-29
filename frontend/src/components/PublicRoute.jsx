@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 
 function PublicRoute() {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000' 
     const [isChecking, setIsChecking] = useState(true);
     const [authorized, setAuthorized] = useState(false);
 
