@@ -286,7 +286,7 @@ def get_user():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT userID, name, email FROM User WHERE userID=%s", (user_id,))
+        cursor.execute("SELECT userID, name, email, profilePic FROM User WHERE userID=%s", (user_id,))
         user = cursor.fetchone()
     finally:
         cursor.close()
@@ -295,7 +295,7 @@ def get_user():
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
     
-    return jsonify({"success": True, "user": {"id": user["userID"], "name": user["name"], "email": user["email"]}}), 200
+    return jsonify({"success": True, "user": {"id": user["userID"], "name": user["name"], "email": user["email"], "profilePic": user["profilePic"]}}), 200
 
 
 # Update current user (name and/or password)
