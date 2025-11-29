@@ -56,6 +56,28 @@ function LoginPage() {
         }
     }
 
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const res = await fetch(`${API_URL}/auth/login/google`, {
+                credentials: "include"
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.url) {
+                setError(data.message || "Something went wrong.. Please try again!");
+            } else {
+                window.location.href = data.url
+            }
+        } catch (error) {
+            alert("Something went wrong.. Please try again!");
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center px-6 py-8 sm:px-6 lg:px-8">
             {/* Background Pattern */}
@@ -191,6 +213,12 @@ function LoginPage() {
 
                         >
                             {loading ? "Signing in..." : "Sign in"}
+                        </button>
+
+                        <button 
+                            onClick={handleGoogleLogin} 
+                            disabled={loading}>
+                            Continue with Google
                         </button>
 
                         <div className="text-center">

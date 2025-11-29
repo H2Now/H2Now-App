@@ -56,7 +56,7 @@ export default function Account() {
                             className="w-[125px] h-[44px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
                             onClick={async () => {
                                 try {
-                                    const res = await fetch(`${API_URL}/api/auth/logout`, {
+                                    const res = await fetch(`${API_URL}/auth/logout`, {
                                         credentials: "include",
                                     })
                                     if (res.ok) {
