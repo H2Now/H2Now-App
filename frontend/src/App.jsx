@@ -2,7 +2,7 @@ import { Route, Routes, useLocation } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Hub from "./pages/hub_pages/Hub"
 import Account from "./pages/hub_pages/Account"
-import Settings from "./pages/hub_pages/Settings"
+import Reminders from "./pages/Reminders"
 import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
@@ -23,10 +23,10 @@ function App() {
 					<Route path="/login" element={<LoginPage />}></Route>
 					<Route path="/register" element={<RegisterPage />}></Route>
 				</Route>	
-				<Route element={<ProtectedRoute />}>
-					<Route path="/hub" element={<Hub />}></Route>
-					<Route path="/hub/account" element={<Account />}></Route>
-					<Route path="/hub/settings" element={<Settings />}></Route>
+			<Route element={<ProtectedRoute />}>
+				<Route path="/hub" element={<Hub />}></Route>
+				<Route path="/hub/account" element={<Account />}></Route>
+				<Route path="/reminders" element={<Reminders />}></Route>
 				</Route>
 			</Routes>
 		</>

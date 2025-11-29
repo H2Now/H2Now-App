@@ -7,7 +7,7 @@ export default function Dropdown() {
         [notifications, setNotifications] = useState(false),
         [vibration, setVibration] = useState(false),
         [alerts, setAlerts] = useState(false),
-        [reminderFrequency, setReminderFrequency] = useState(1)
+        [reminderFrequency, setReminderFrequency] = useState(2)
 
     return (
         <>
