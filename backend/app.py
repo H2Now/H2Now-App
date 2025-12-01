@@ -497,5 +497,101 @@ def update_user_settings():
     return jsonify({"success": True, "message": "Bottle settings have been updated successfully."}), 200
 
 
+@app.route("/user/water_bottle/intake/activity/<int:session_id>", methods=["PATCH"])
+def update_drinking_session(session_id):
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    user_id = session["user_id"]
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({"success": False, "message": "Invalid JSON"}), 400
+    
+    estimated_intake = data.get("estimatedIntake")
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT ds.estimatedIntake
+            FROM DrinkingSession ds
+            JOIN Bottle b ON ds.bottleID = b.bottleID
+            WHERE ds.sessionID = %s AND b.userID = %s
+            """, (session_id, user_id))
+        
+        session_record = cursor.fetchone()
+
+        if not session_record:
+            return jsonify({"success": False, "message": "Session not found."}), 404
+        
+        old_intake = float(session_record["estimatedIntake"]) if session_record["estimatedIntake"] else 0
+        
+        if estimated_intake is not None:
+            try:
+                estimated_intake = float(estimated_intake)
+            except (TypeError, ValueError):
+                return jsonify({"success": False, "message": "estimatedIntake must be a number"}), 400
+            
+            if estimated_intake < 0:
+                return jsonify({"success": False, "message": "estimatedIntake cannot be negative"}), 400
+
+        # Update drinking session's estimateIntake
+        cursor.execute(
+            """
+            UPDATE DrinkingSession
+            SET estimatedIntake = %s
+            WHERE sessionID = %s
+            """, (estimated_intake, session_id)
+        )
+
+        # Check if there's a difference between updated and old intake
+        difference = estimated_intake - old_intake
+        if difference != 0:
+            # Update daily intake total
+            cursor.execute(
+                """
+                UPDATE Intake i
+                JOIN DrinkingSession ds ON i.bottleID = ds.bottleID
+                SET i.totalIntake = i.totalIntake + %s
+                WHERE ds.sessionID = %s
+                AND I.intakeDate = DATE(ds.startTime)
+                """, (difference, session_id)
+            )
+
+            # Update goalReached status
+            cursor.execute(
+                """
+                UPDATE Intake i
+                JOIN Bottle b ON i.bottleID = b.bottleID
+                JOIN DrinkingSession ds ON i.bottleID = ds.bottleID
+                SET i.goalReached = (i.totalIntake >= b.goal)
+                WHERE ds.sessionID = %s
+                AND i.intakeDate = DATE(ds.startTime)
+                """, (session_id,)
+            )
+
+            conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"success": True, "message": "Drinking session was updated successfully"}), 200
+
+
+# @app.route("/user/water_bottle/intake/activity/<int:session_id>", methods=["DELETE"])
+# def delete_drinking_session(session_id):
+#     if "user_id" not in session:
+#         return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+#     user_id = session["user_id"]
+
+#     try:
+#         conn = get_db_connection()
+#         cursor = conn.cursor(dictionary=True)
+
+
 if __name__ == "__main__":
     app.run()
