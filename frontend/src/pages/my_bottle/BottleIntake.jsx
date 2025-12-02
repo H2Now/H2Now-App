@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import LoadingSpinner from "../../components/LoadingSpinner"
 
 export default function BottleIntake() {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     const [intakeData, setIntakeData] = useState([])
     const [editingId, setEditingId] = useState(null)
     const [editAmount, setEditAmount] = useState("")
@@ -25,12 +26,12 @@ export default function BottleIntake() {
         const fetchTodayIntake = async () => {
             setLoading(true)
             setError("")
-            
+
             const todayDate = getTodayDate()
-            
+
             try {
                 const response = await fetch(
-                    `http://localhost:5000/user/water_bottle/activity?date=${todayDate}`,
+                    `${API_URL}/user/water_bottle/activity?date=${todayDate}`,
                     {
                         method: "GET",
                         credentials: "include",
@@ -48,8 +49,8 @@ export default function BottleIntake() {
 
                 if (data.success) {
                     // Transform API data to match component format
-                    const transformedData = data.activities.map((activity, index) => ({
-                        id: index + 1, // Generate ID from index
+                    const transformedData = data.activities.map(activity => ({
+                        id: activity.sessionID,
                         time: activity.time,
                         amount: activity.intake
                     }))
@@ -82,7 +83,7 @@ export default function BottleIntake() {
         setEditAmount(entry.amount.toString())
     }
 
-    const handleSave = (id) => {
+    const handleSave = async (id) => {
         const newAmount = parseInt(editAmount)
         if (isNaN(newAmount) || newAmount <= 0) {
             setError("Please enter a valid amount")
@@ -90,13 +91,36 @@ export default function BottleIntake() {
             return
         }
 
-        setIntakeData(intakeData.map(entry => 
-            entry.id === id ? { ...entry, amount: newAmount } : entry
-        ))
-        setEditingId(null)
-        setEditAmount("")
-        setSuccess("Entry updated successfully!")
-        setTimeout(() => setSuccess(""), 3000)
+        try {
+            const response = await fetch(`${API_URL}/user/water_bottle/intake/activity/${id}`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify({
+                    estimatedIntake: newAmount
+                })
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to update intake")
+            }
+
+            setIntakeData(intakeData.map(entry =>
+                entry.id === id ? { ...entry, amount: newAmount } : entry
+            ))
+            setEditingId(null)
+            setEditAmount("")
+            setSuccess("Entry updated successfully!")
+            setTimeout(() => setSuccess(""), 3000)
+        } catch (err) {
+            console.error("Error updating intake: ", err)
+            setError(err.message || "Failed to update intake")
+            setTimeout(() => setError(""), 3000)
+        }
     }
 
     const handleCancel = () => {
@@ -262,7 +286,7 @@ export default function BottleIntake() {
                 <div>
                     <h4 className="text-blue-900 dark:text-blue-300 font-semibold mb-1">About Intake Tracking</h4>
                     <p className="text-blue-800 dark:text-blue-400 text-sm">
-                        Your bottle automatically records water intake. If you notice an inaccurate reading, you can edit or delete it here. 
+                        Your bottle automatically records water intake. If you notice an inaccurate reading, you can edit or delete it here.
                     </p>
                 </div>
             </div>

@@ -534,6 +534,7 @@ def get_activity():
         # Get all drinking sessions for the selected date
         cursor.execute("""
             SELECT 
+                sessionID,
                 startTime,
                 estimatedIntake
             FROM DrinkingSession
@@ -579,6 +580,7 @@ def get_activity():
         cumulative += intake
         
         activity_list.append({
+            "sessionID": drinking_session["sessionID"],
             "time": drinking_session["startTime"].strftime("%I:%M %p") if drinking_session["startTime"] else "N/A",
             "intake": intake,
             "progressAfter": cumulative,
