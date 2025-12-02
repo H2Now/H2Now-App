@@ -497,6 +497,105 @@ def update_user_settings():
     return jsonify({"success": True, "message": "Bottle settings have been updated successfully."}), 200
 
 
+# Get user's drinking session activity for a selected date
+@app.route("/user/water_bottle/activity", methods=["GET"])
+def get_activity():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+
+    user_id = session["user_id"]
+    
+    # Get the date from query parameters (format: YYYY-MM-DD)
+    date = request.args.get("date")
+    
+    if not date:
+        return jsonify({"success": False, "message": "Date parameter is required"}), 400
+    
+    # Validate date format
+    try:
+        from datetime import datetime
+        datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get the user's bottle ID
+        cursor.execute("SELECT bottleID FROM Bottle WHERE userID = %s", (user_id,))
+        bottle = cursor.fetchone()
+        
+        if not bottle:
+            return jsonify({"success": False, "message": "Bottle not found"}), 404
+        
+        bottle_id = bottle["bottleID"]
+        
+        # Get all drinking sessions for the selected date
+        cursor.execute("""
+            SELECT 
+                startTime,
+                estimatedIntake
+            FROM DrinkingSession
+            WHERE bottleID = %s 
+                AND DATE(startTime) = %s
+            ORDER BY startTime DESC
+        """, (bottle_id, date))
+        
+        sessions = cursor.fetchall()
+        
+        # Get the daily goal and total intake 
+        cursor.execute("""
+            SELECT goal FROM Bottle WHERE bottleID = %s
+        """, (bottle_id,))
+        bottle_data = cursor.fetchone()
+        
+        cursor.execute("""
+            SELECT totalIntake FROM Intake
+            WHERE userID = %s AND intakeDate = %s
+        """, (user_id, date))
+        intake_data = cursor.fetchone()
+        
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Format the response
+    activity_list = []
+    total_intake = float(intake_data["totalIntake"]) if intake_data and intake_data["totalIntake"] else 0.0
+    goal = float(bottle_data["goal"]) if bottle_data and bottle_data["goal"] else 0.0
+    
+    # Calculate cumulative progress for each session
+    # Sessions are ordered DESC (newest first), so we need to calculate progress chronologically
+    cumulative = 0.0
+    
+    # First, reverse the list to go chronologically (oldest first)
+    sessions_reversed = list(reversed(sessions))
+    
+    for drinking_session in sessions_reversed:
+        intake = float(drinking_session["estimatedIntake"]) if drinking_session["estimatedIntake"] else 0.0
+        
+        # Add this intake to get progress after this session
+        cumulative += intake
+        
+        activity_list.append({
+            "time": drinking_session["startTime"].strftime("%I:%M %p") if drinking_session["startTime"] else "N/A",
+            "intake": intake,
+            "progressAfter": cumulative,
+            "goal": goal
+        })
+    
+    # Reverse back to show newest first in the UI
+    activity_list.reverse()
+    
+    return jsonify({
+        "success": True,
+        "date": date,
+        "activities": activity_list,
+    }), 200
+
+  
+# Make edits to user's intake
 @app.route("/user/water_bottle/intake/activity/<int:session_id>", methods=["PATCH"])
 def update_drinking_session(session_id):
     if "user_id" not in session:
@@ -557,7 +656,7 @@ def update_drinking_session(session_id):
                 JOIN DrinkingSession ds ON i.bottleID = ds.bottleID
                 SET i.totalIntake = i.totalIntake + %s
                 WHERE ds.sessionID = %s
-                AND I.intakeDate = DATE(ds.startTime)
+                AND i.intakeDate = DATE(ds.startTime)
                 """, (difference, session_id)
             )
 
@@ -579,19 +678,6 @@ def update_drinking_session(session_id):
         conn.close()
 
     return jsonify({"success": True, "message": "Drinking session was updated successfully"}), 200
-
-
-# @app.route("/user/water_bottle/intake/activity/<int:session_id>", methods=["DELETE"])
-# def delete_drinking_session(session_id):
-#     if "user_id" not in session:
-#         return jsonify({"success": False, "message": "Not authenticated"}), 401
-    
-#     user_id = session["user_id"]
-
-#     try:
-#         conn = get_db_connection()
-#         cursor = conn.cursor(dictionary=True)
-
-
+  
 if __name__ == "__main__":
     app.run()
