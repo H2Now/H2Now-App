@@ -679,5 +679,68 @@ def update_drinking_session(session_id):
 
     return jsonify({"success": True, "message": "Drinking session was updated successfully"}), 200
   
+
+@app.route("/user/water_bottle/intake/activity/<int:session_id>", methods=["DELETE"])  
+def delete_drinking_session(session_id):
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+
+    user_id = session["user_id"]
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Verify session belongs to user and get estimatedIntake value
+        cursor.execute(
+            """
+            SELECT ds.estimatedIntake
+            FROM DrinkingSession ds
+            JOIN Bottle b ON ds.bottleID = b.bottleID
+            WHERE ds.sessionID = %s AND b.userID = %s
+            """, (session_id, user_id)
+        )
+
+        session_record = cursor.fetchone()
+
+        if not session_record:
+            return jsonify({"success": False, "message": "Session not found."}), 404
+        
+        intake_to_remove = float(session_record["estimatedIntake"]) if session_record else 0
+        
+        # Update the daily intake
+        if intake_to_remove > 0:
+            cursor.execute(
+                """
+                UPDATE Intake i 
+                JOIN Bottle b ON i.bottleID = b.bottleID
+                JOIN DrinkingSession ds ON i.bottleID = ds.bottleID
+                SET totalIntake = totalIntake - %s
+                WHERE ds.sessionID = %s
+                """, (intake_to_remove, session_id)
+            )
+
+            # Update goalReached status
+            cursor.execute(
+                """
+                UPDATE Intake i
+                JOIN Bottle b ON i.bottleID = b.bottleID
+                JOIN DrinkingSession ds ON i.bottleID = ds.bottleID
+                SET i.goalReached = (i.totalIntake >= b.goal)
+                WHERE ds.sessionID = %s
+                AND i.intakeDate = DATE(ds.startTime)
+                """, (session_id,)
+            )
+        
+        # Delete drinking session
+        cursor.execute("DELETE FROM DrinkingSession WHERE sessionID = %s", (session_id,))
+
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"success": True, "message": "Drinking session has been deleted successfully."}), 200
+
 if __name__ == "__main__":
     app.run()
