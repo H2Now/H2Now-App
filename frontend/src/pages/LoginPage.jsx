@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 function LoginPage() {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -192,6 +193,8 @@ function LoginPage() {
                         >
                             {loading ? "Signing in..." : "Sign in"}
                         </button>
+
+                        <GoogleAuthButton text="Sign in with Google"></GoogleAuthButton>
 
                         <div className="text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-300">

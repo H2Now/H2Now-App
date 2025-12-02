@@ -15,11 +15,13 @@ DROP TABLE IF EXISTS DrinkingSession;
 CREATE TABLE User (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NULL,
     name VARCHAR(150) NOT NULL,
     profilePic VARCHAR(255),
     streakStart DATE,
-    streak INT
+    streak INT,
+    google_id VARCHAR(255) UNIQUE,
+    auth_provider VARCHAR(50) DEFAULT 'local'
 );
 
 -- ==============================

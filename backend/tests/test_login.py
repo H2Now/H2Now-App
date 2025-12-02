@@ -39,7 +39,7 @@ def test_login_valid_user(client, monkeypatch):
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
+    response = client.post("/auth/login", json={
         "email": "user@test.com",
         "password": "password123"
     })
@@ -70,7 +70,7 @@ def test_login_invalid_user(client, monkeypatch):
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
+    response = client.post("/auth/login", json={
         "email": "user@test.com",
         "password": "password123"
     })
@@ -104,7 +104,7 @@ def test_login_missing_credentials(client, monkeypatch):
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
+    response = client.post("/auth/login", json={
         "email": "",
         "password": ""
     })
@@ -138,7 +138,7 @@ def test_login_missing_email(client, monkeypatch):
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
+    response = client.post("/auth/login", json={
         "email": "",
         "password": "password123"
     })
@@ -172,7 +172,7 @@ def test_login_missing_password(client, monkeypatch):
     import app
     monkeypatch.setattr(app, "get_db_connection", mock_get_db_connection)
 
-    response = client.post("/api/auth/login", json={
+    response = client.post("/auth/login", json={
         "email": "user@test.com",
         "password": ""
     })
