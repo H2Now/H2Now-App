@@ -2,6 +2,7 @@ import { useState, useRef } from "react"
 import Bottle from "../my_bottle/Bottle"
 import BottleSettings from "../my_bottle/BottleSettings"
 import BottleActivity from "../my_bottle/BottleActivity"
+import BottleIntake from "../my_bottle/BottleIntake"
 
 
 export default function MyBottle() {
@@ -58,20 +59,13 @@ export default function MyBottle() {
 
                     {/* Dynamic Content Box - Expands on desktop */}
                     <div className="w-full lg:flex-1 lg:max-w-[900px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
-                        {activeSection === "settings" ? (
+                        {activeSection === "intake" ? (
+                            <BottleIntake />
+                        ) : activeSection === "settings" ? (
                             <BottleSettings onDataChange={() => bottleRef.current?.refreshBottleData()} />
                         ) : activeSection === "statistics" ? (
                             <BottleActivity />
-                        ) : (
-                            <>
-                                <h4 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
-                                    {activeSection}
-                                </h4>
-                                <div className="text-gray-600 dark:text-gray-400 text-center py-8">
-                                    Content goes here
-                                </div>
-                            </>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             )}
