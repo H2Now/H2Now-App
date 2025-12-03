@@ -742,5 +742,108 @@ def delete_drinking_session(session_id):
 
     return jsonify({"success": True, "message": "Drinking session has been deleted successfully."}), 200
 
+
+@app.route("/user/preferences", methods=["GET"])
+def get_preferences():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    user_id = session["user_id"]
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT reminderFreq, bottleAlertEnabled
+            FROM UserPreferences
+            WHERE userID = %s
+            """,(user_id,)
+        )
+
+        preferences = cursor.fetchone()
+
+        if not preferences:
+            cursor.execute(
+                """
+                INSERT INTO UserPreferences (userID, reminderFreq, bottleAlertEnabled)
+                VALUES (%s, 1, FALSE)
+                """, (user_id,)
+            )
+            conn.commit()
+            preferences = {"reminderFreq": 1, "bottleAlertEnabled": False}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({
+        "success": True,
+        "preferences": {
+            "reminderFreq": preferences["reminderFreq"],
+            "bottleAlertEnabled": bool(preferences["bottleAlertEnabled"])
+        }
+    }), 200
+
+
+@app.route("/user/preferences", methods=["PATCH"])
+def update_preferences():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    user_id = session["user_id"]
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({"success": False, "message": "Invalid JSON"}), 400
+    
+    reminder_freq = data.get("reminderFreq")
+    bottle_alert_enabled = data.get("bottleAlertEnabled")
+
+    updates = []
+    params = []
+
+    if reminder_freq is not None:
+        try:
+            reminder_freq = int(reminder_freq)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "reminderFreq must be a number"}), 400
+
+        if reminder_freq < 1 or reminder_freq > 24:
+            return jsonify({"success": False, "message": "reminderFreq must be between 1 and 24"}), 400
+        
+        updates.append("reminderFreq = %s")
+        params.append(reminder_freq)
+
+    if bottle_alert_enabled is not None:
+        updates.append("bottleAlertEnabled = %s")
+        params.append(bool(bottle_alert_enabled))
+
+    if not updates:
+        return jsonify({"success": False, "message": "No fields to update"}), 400
+        
+    params.append(user_id)
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT userID FROM UserPreferences WHERE userID = %s", (user_id,))
+        if not cursor.fetchone():
+            cursor.execute("""
+                INSERT INTO UserPreferences (userID, reminderFreq, bottleAlertEnabled)
+                VALUES (%s, 1, FALSE)
+            """, (user_id,))
+
+        query = f"UPDATE UserPreferences SET {','.join(updates)} WHERE userID = %s"
+        cursor.execute(query, params)
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"success": True, "message": "User Preferences updated"}), 200
 if __name__ == "__main__":
     app.run()
