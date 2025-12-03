@@ -2,6 +2,7 @@ import { useState, useRef } from "react"
 import Bottle from "../my_bottle/Bottle"
 import BottleSettings from "../my_bottle/BottleSettings"
 import BottleActivity from "../my_bottle/BottleActivity"
+import BottleIntake from "../my_bottle/BottleIntake"
 
 
 export default function MyBottle() {
@@ -44,9 +45,9 @@ export default function MyBottle() {
                                 Settings
                             </button>
                             <button
-                                onClick={() => setActiveSection("statistics")}
+                                onClick={() => setActiveSection("activity")}
                                 className={`flex-1 lg:w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
-                                    activeSection === "statistics"
+                                    activeSection === "activity"
                                         ? "bg-blue-500 text-white shadow-md scale-105"
                                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:scale-102 active:scale-95"
                                 }`}
@@ -58,20 +59,13 @@ export default function MyBottle() {
 
                     {/* Dynamic Content Box - Expands on desktop */}
                     <div className="w-full lg:flex-1 lg:max-w-[900px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
-                        {activeSection === "settings" ? (
+                        {activeSection === "intake" ? (
+                            <BottleIntake onDataChange={() => bottleRef.current?.refreshBottleData()} />
+                        ) : activeSection === "settings" ? (
                             <BottleSettings onDataChange={() => bottleRef.current?.refreshBottleData()} />
-                        ) : activeSection === "statistics" ? (
+                        ) : activeSection === "activity" ? (
                             <BottleActivity />
-                        ) : (
-                            <>
-                                <h4 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 capitalize">
-                                    {activeSection}
-                                </h4>
-                                <div className="text-gray-600 dark:text-gray-400 text-center py-8">
-                                    Content goes here
-                                </div>
-                            </>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             )}
