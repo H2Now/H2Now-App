@@ -10,6 +10,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+
       manifest: {
         name: 'H2Now',
         short_name: 'H2Now',
@@ -19,17 +24,13 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
-          {
-            src: '/icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
+          { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' }
         ]
+      },
+
+      injectManifest: {
+        globPatterns: [],
       }
     })
   ],
