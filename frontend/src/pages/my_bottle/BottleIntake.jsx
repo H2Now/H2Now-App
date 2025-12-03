@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import LoadingSpinner from "../../components/LoadingSpinner"
 
-export default function BottleIntake() {
+export default function BottleIntake({ onDataChange }) {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     const [intakeData, setIntakeData] = useState([])
     const [editingId, setEditingId] = useState(null)
@@ -116,6 +116,11 @@ export default function BottleIntake() {
             setEditAmount("")
             setSuccess("Entry updated successfully!")
             setTimeout(() => setSuccess(""), 3000)
+
+            // Notify parent component to refresh bottle data
+            if (onDataChange) {
+                onDataChange()
+            }
         } catch (err) {
             console.error("Error updating intake: ", err)
             setError(err.message || "Failed to update intake")
@@ -133,12 +138,37 @@ export default function BottleIntake() {
         setShowDeleteModal(true)
     }
 
-    const handleConfirmDelete = () => {
-        setIntakeData(intakeData.filter(entry => entry.id !== deleteId))
+    const handleConfirmDelete = async () => {
+        try {
+            const response = await fetch(`${API_URL}/user/water_bottle/intake/activity/${deleteId}`, {
+                method: "DELETE",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to delete intake")
+            }
+
+            setIntakeData(intakeData.filter(entry => entry.id !== deleteId))
+            setSuccess("Entry deleted successfully!")
+            setTimeout(() => setSuccess(""), 3000)
+
+            // Notify parent component to refresh bottle data
+            if (onDataChange) {
+                onDataChange()
+            }
+        } catch (err) {
+            console.error("Error deleting intake: ", err)
+            setError(err.message || "Failed to delete intake")
+            setTimeout(() => setError(""), 3000)
+        }
         setShowDeleteModal(false)
         setDeleteId(null)
-        setSuccess("Entry deleted successfully!")
-        setTimeout(() => setSuccess(""), 3000)
     }
 
     const handleCancelDelete = () => {

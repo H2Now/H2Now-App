@@ -398,7 +398,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                             </div>
                             <div className="text-right">
                                 <p className="text-3xl lg:text-4xl font-bold text-gray-700 dark:text-gray-300">
-                                    {intakePercentage}%
+                                    {intakePercentage > 100 ? 100 : intakePercentage}%
                                 </p>
                                 <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">
                                     {dailyGoal - currentIntake > 0 ? `${dailyGoal - currentIntake}ml to go` : 'Goal reached! 🎉'}

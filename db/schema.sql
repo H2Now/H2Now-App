@@ -32,7 +32,6 @@ CREATE TABLE Bottle (
     userID INT UNIQUE,
     bottleName VARCHAR(150),
     goal DECIMAL(6,2),
-    capacity DECIMAL(6,2) NOT NULL,
     connected BOOLEAN DEFAULT FALSE,
     connectedAt DATETIME,
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE

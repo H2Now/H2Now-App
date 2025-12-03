@@ -113,7 +113,7 @@ class BottleEventListener(SubscribeCallback):
 
         try:
             cursor.execute(
-                "SELECT bottleID, userID, capacity FROM Bottle WHERE bottleID = %s",
+                "SELECT bottleID, userID FROM Bottle WHERE bottleID = %s",
                 (bottle_id,)
             )
             bottle_info = cursor.fetchone()

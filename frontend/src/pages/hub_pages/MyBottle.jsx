@@ -45,9 +45,9 @@ export default function MyBottle() {
                                 Settings
                             </button>
                             <button
-                                onClick={() => setActiveSection("statistics")}
+                                onClick={() => setActiveSection("activity")}
                                 className={`flex-1 lg:w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
-                                    activeSection === "statistics"
+                                    activeSection === "activity"
                                         ? "bg-blue-500 text-white shadow-md scale-105"
                                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:scale-102 active:scale-95"
                                 }`}
@@ -60,10 +60,10 @@ export default function MyBottle() {
                     {/* Dynamic Content Box - Expands on desktop */}
                     <div className="w-full lg:flex-1 lg:max-w-[900px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
                         {activeSection === "intake" ? (
-                            <BottleIntake />
+                            <BottleIntake onDataChange={() => bottleRef.current?.refreshBottleData()} />
                         ) : activeSection === "settings" ? (
                             <BottleSettings onDataChange={() => bottleRef.current?.refreshBottleData()} />
-                        ) : activeSection === "statistics" ? (
+                        ) : activeSection === "activity" ? (
                             <BottleActivity />
                         ) : null}
                     </div>
