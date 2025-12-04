@@ -71,7 +71,7 @@ CREATE TABLE Intake (
 -- ==============================
 CREATE TABLE UserPreferences (
     userID INT PRIMARY KEY,
-    reminderFreq INT NOT NULL,
-    themeMode ENUM('light','dark','system') DEFAULT 'system',
+    reminderFreq INT NOT NULL DEFAULT 1,
+    bottleAlertEnabled BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
 );

@@ -50,7 +50,9 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
     // Handle real-time updates from PubNub
     useEffect(() => {
-        setIsPiOnline(pubnubStatus)
+        if (pubnubStatus !== null) {
+            setIsPiOnline(pubnubStatus)
+        }
         if (latestIntake) {
             setCurrentIntake(latestIntake.total)
         }

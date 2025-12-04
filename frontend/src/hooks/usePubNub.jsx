@@ -2,7 +2,7 @@ import PubNub from 'pubnub'
 import { useState, useEffect } from 'react'
 
 export default function usePubNub(userId) {
-    const [bottleConnected, setBottleConnected] = useState(false)
+    const [bottleConnected, setBottleConnected] = useState(null)
     const [latestIntake, setLatestIntake] = useState(null)
 
     useEffect(() => {
