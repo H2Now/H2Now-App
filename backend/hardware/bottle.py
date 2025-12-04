@@ -26,8 +26,8 @@ class BottleHardware:
         # Track weight when bottle is picked up
         self.pickup_weight = None
 
-    def update_reminder_settings(self, reminder_freq_hours, bottle_alert_enabled):
-        self.mpu6050.update_reminder_settings(reminder_freq_hours, bottle_alert_enabled)
+    def update_reminder_settings(self, reminder_freq_mins, bottle_alert_enabled):
+        self.mpu6050.update_reminder_settings(reminder_freq_mins, bottle_alert_enabled)
 
     def _monitor_loop(self):
         try:

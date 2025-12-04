@@ -26,7 +26,7 @@ class MPU6050:
         self.PLACED_CONFIRM = 1.0  
 
         # Reminder settings
-        self.reminder_freq_seconds = 60 * 60 
+        self.reminder_freq_seconds = 0 
         self.bottle_alert_enabled = False
 
         # State variables
@@ -40,8 +40,8 @@ class MPU6050:
         self.prev_movement_timestamp = time.time() # When user last moved bottle
 
     # Update reminder settings from backend
-    def update_reminder_settings(self, reminder_freq_hours, bottle_alert_enabled):
-        self.reminder_freq_seconds = reminder_freq_hours * 60 * 60
+    def update_reminder_settings(self, reminder_freq_mins, bottle_alert_enabled):
+        self.reminder_freq_seconds = reminder_freq_mins * 60
         self.bottle_alert_enabled = bottle_alert_enabled
 
     # Read in accel from MPU (raw)

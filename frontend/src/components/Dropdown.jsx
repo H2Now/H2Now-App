@@ -12,6 +12,14 @@ export default function Dropdown({
     const [open, setOpen] = useState(false)
     const [appAlerts, setAppAlerts] = useState(false)
 
+    const hours = Math.floor(reminderFreq / 60)
+    const mins = reminderFreq % 60
+
+    const updateFreq = (newHours, newMins) => {
+        const totalMins = (newHours * 60) + newMins
+        setReminderFreq(Math.max(5, Math.min(1440, totalMins)))
+    }
+
     return (
         <>
             <div className="relative">
@@ -47,15 +55,15 @@ export default function Dropdown({
 
                     <div className={`${!bottleAlertEnabled && !appAlerts ? 'opacity-50 pointer-events-none': ''} mt-4 pt-3 border-t border-gray-200 dark:border-slate-600`}>
                         <label className={`text-gray-500 dark:text-gray-400 text-[14px] block mb-2`}>
-                            Reminder Frequency
+                            Remind Me Every
                         </label>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
                                 <button
                                     type="button"
-                                    onClick={() => setReminderFreq(Math.max(1, reminderFreq - 1))}
-                                    disabled={!bottleAlertEnabled && !appAlerts || reminderFreq <= 1}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${reminderFreq <= 1
+                                    onClick={() => updateFreq(Math.max(0, hours - 1), mins)}
+                                    disabled={!bottleAlertEnabled && !appAlerts || hours <= 0}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${hours <= 0
                                         ? 'bg-gray-100 dark:bg-slate-600/50 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                                         : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 cursor-pointer dark:hover:bg-blue-900/50 active:scale-95'
                                         }`}
@@ -65,13 +73,13 @@ export default function Dropdown({
                                     </svg>
                                 </button>
                                 <div className='bg-gray-100 dark:bg-slate-600/50 min-w-[60px] px-3 py-2 text-center text-[16px] font-semibold text-gray-800 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-slate-500'>
-                                    {reminderFreq}
+                                    {hours}
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setReminderFreq(Math.min(24, reminderFreq + 1))}
-                                    disabled={!bottleAlertEnabled && !appAlerts || reminderFreq >= 24}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${reminderFreq >= 24
+                                    onClick={() => updateFreq(Math.min(24, hours + 1), mins)}
+                                    disabled={!bottleAlertEnabled && !appAlerts || hours >= 23}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${hours >= 23
                                         ? 'bg-gray-100 dark:bg-slate-600/50 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                                         : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 cursor-pointer dark:hover:bg-blue-900/50 active:scale-95'
                                         }`}
@@ -82,7 +90,43 @@ export default function Dropdown({
                                 </button>
                             </div>
                             <span className={`text-gray-600 dark:text-gray-300 text-[14px]`}>
-                                hour{reminderFreq !== 1 ? 's' : ''}
+                                hour{hours > 1 ? 's' : ''}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => updateFreq(hours, mins - 5)}
+                                    disabled={!bottleAlertEnabled && !appAlerts || mins <= 5 && hours <= 0 || mins <= 0 && hours > 0}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${mins <= 5 && hours <= 0 || mins <= 0 && hours > 0
+                                        ? 'bg-gray-100 dark:bg-slate-600/50 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 cursor-pointer dark:hover:bg-blue-900/50 active:scale-95'
+                                        }`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div className='bg-gray-100 dark:bg-slate-600/50 min-w-[60px] px-3 py-2 text-center text-[16px] font-semibold text-gray-800 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-slate-500'>
+                                    {mins}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick= {() => updateFreq(hours, mins + 5)}
+                                    disabled={!bottleAlertEnabled && !appAlerts || mins >= 55}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${mins >= 55
+                                        ? 'bg-gray-100 dark:bg-slate-600/50 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 cursor-pointer dark:hover:bg-blue-900/50 active:scale-95'
+                                        }`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span className={`text-gray-600 dark:text-gray-300 text-[14px]`}>
+                                mins
                             </span>
                         </div>
                     </div>

@@ -31,8 +31,8 @@ print(f"✅ {BOTTLE_ID} subscribed with presence (heartbeat: {pnconfig.heartbeat
 
 BACKEND_URL = os.getenv("BACKEND_URL", "https://h2now.online")
 
-# Poll every 3 minutes
-POLL_INTERVAL = 180
+# Poll every 1 minute
+POLL_INTERVAL = 60
 
 def fetch_settings(monitor):
     try:
@@ -41,7 +41,7 @@ def fetch_settings(monitor):
             data = res.json()
             if data.get("success"):
                 settings = data.get("settings", {})
-                reminder_freq = settings.get("reminderFreq", 1)
+                reminder_freq = settings.get("reminderFreq", 0)
                 bottle_alert_enabled = settings.get("bottleAlertEnabled", False)
                 # Update monitor with new settings
                 monitor.update_reminder_settings(reminder_freq, bottle_alert_enabled)

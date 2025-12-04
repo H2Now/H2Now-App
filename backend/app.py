@@ -770,11 +770,11 @@ def get_preferences():
             cursor.execute(
                 """
                 INSERT INTO UserPreferences (userID, reminderFreq, bottleAlertEnabled)
-                VALUES (%s, 1, FALSE)
+                VALUES (%s, 0, FALSE)
                 """, (user_id,)
             )
             conn.commit()
-            preferences = {"reminderFreq": 1, "bottleAlertEnabled": False}
+            preferences = {"reminderFreq": 0, "bottleAlertEnabled": False}
 
     finally:
         cursor.close()
@@ -812,8 +812,8 @@ def update_preferences():
         except (TypeError, ValueError):
             return jsonify({"success": False, "message": "reminderFreq must be a number"}), 400
 
-        if reminder_freq < 1 or reminder_freq > 24:
-            return jsonify({"success": False, "message": "reminderFreq must be between 1 and 24"}), 400
+        if reminder_freq < 0 or reminder_freq > (24*60):
+            return jsonify({"success": False, "message": "reminderFreq must be in the valid range"}), 400
         
         updates.append("reminderFreq = %s")
         params.append(reminder_freq)
@@ -835,7 +835,7 @@ def update_preferences():
         if not cursor.fetchone():
             cursor.execute("""
                 INSERT INTO UserPreferences (userID, reminderFreq, bottleAlertEnabled)
-                VALUES (%s, 1, FALSE)
+                VALUES (%s, 0, FALSE)
             """, (user_id,))
 
         query = f"UPDATE UserPreferences SET {','.join(updates)} WHERE userID = %s"
