@@ -4,9 +4,11 @@ import MyBottle from "./MyBottle"
 import Settings from "./Settings"
 import MobileNavbar from "../../components/MobileNavbar"
 import Account from "./Account"
+import SplashScreen from "../../components/SplashScreen"
 
 export default function Hub() {
   const [activePage, setActivePage] = useState("bottle")
+  const [showSplashScreen, setShowSplashScreen] = useState(!sessionStorage.getItem("splashShown"))
 
   const renderPage = () => {
     switch (activePage) {
@@ -21,16 +23,25 @@ export default function Hub() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <Header text="H2Now" />
-      <div className="overflow-auto flex justify-center px-4 pb-28 sm:pb-8">
-        <div className="w-full flex justify-center py-8">
-          {renderPage()}
-        </div>
-      </div>
+  const handleSplashEnd = () => {
+    setShowSplashScreen(false)
+    sessionStorage.setItem("splashShown", null)
+  }
 
-      <MobileNavbar page="Hub" activePage={activePage} setActivePage={setActivePage} />
-    </div>
+  return (
+    <>
+      {showSplashScreen && <SplashScreen onFinish={handleSplashEnd} />}
+
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 z-0">
+        <Header text="H2Now" />
+        <div className="overflow-auto flex justify-center px-4 pb-28 sm:pb-8">
+          <div className="w-full flex justify-center py-8">
+            {renderPage()}
+          </div>
+        </div>
+
+        <MobileNavbar page="Hub" activePage={activePage} setActivePage={setActivePage} />
+      </div>
+    </>
   )
 }

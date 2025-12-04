@@ -22,9 +22,12 @@ class MPU6050:
         self.DRINK_ANGLE_MAX = 80    
         self.DRINK_HOLD_TIME = 0.5   
         self.STILL_TIME  = 2.0          # For placement and drinking
-        self.INACTIVE_TIME = 60.0       # For time after placement before buzzer
         self.PLACED_ANGLE_MAX  = 15    
         self.PLACED_CONFIRM = 1.0  
+
+        # Reminder settings
+        self.reminder_freq_seconds = 60 * 60 
+        self.bottle_alert_enabled = False
 
         # State variables
         self.prev_ax, self.prev_ay, self.prev_az = 0, 0, 0
@@ -36,6 +39,10 @@ class MPU6050:
         self.stop_drink_timestamp = None # When it seems like user has stopped drinking
         self.prev_movement_timestamp = time.time() # When user last moved bottle
 
+    # Update reminder settings from backend
+    def update_reminder_settings(self, reminder_freq_hours, bottle_alert_enabled):
+        self.reminder_freq_seconds = reminder_freq_hours * 60 * 60
+        self.bottle_alert_enabled = bottle_alert_enabled
 
     # Read in accel from MPU (raw)
     def read_raw_accel(self, addr):
@@ -129,7 +136,10 @@ class MPU6050:
     
     # Detect inactivity with the bottle
     def detect_inactivity(self, now):
-        if self.placed_bottle_timestamp and (now - self.placed_bottle_timestamp) >= self.INACTIVE_TIME:
+        if not self.bottle_alert_enabled:
+            return False
+        
+        if self.placed_bottle_timestamp and (now - self.placed_bottle_timestamp) >= self.reminder_freq_seconds:
             print("Please drink your water!")
             self.placed_bottle_timestamp = now
             return True

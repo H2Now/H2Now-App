@@ -18,6 +18,7 @@ function GoogleAuthButton({ text }) {
             if (!res.ok || !data.url) {
                 setError(data.message || "Something went wrong.. Please try again!");
             } else {
+                sessionStorage.removeItem("splashShown")
                 window.location.href = data.url
             }
         } catch (error) {
