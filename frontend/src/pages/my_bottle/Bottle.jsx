@@ -1,6 +1,7 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
 import usePubNub from "../../hooks/usePubNub"
 import LoadingSpinner from "../../components/LoadingSpinner"
+import { useUnitPreference, formatIntake } from "../../hooks/usePreferences"
 
 const ErrorMessage = ({ message }) => (
     <div className="w-[293px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
@@ -15,6 +16,7 @@ const ErrorMessage = ({ message }) => (
 
 const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const unit = useUnitPreference()
 
     const [userId, setUserId] = useState(null)
     const [hasBottleInDB, setHasBottleInDB] = useState(false)
@@ -332,7 +334,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Daily Goal (ml)
+                                    Daily Goal ({unit})
                                 </label>
                                 <input
                                     type="number"
@@ -394,16 +396,16 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
-                                    {currentIntake}ml
+                                    {formatIntake(currentIntake, unit)}
                                 </p>
-                                <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">of {dailyGoal}ml</p>
+                                <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">of {formatIntake(dailyGoal, unit)}</p>
                             </div>
                             <div className="text-right">
                                 <p className="text-3xl lg:text-4xl font-bold text-gray-700 dark:text-gray-300">
                                     {intakePercentage > 100 ? 100 : intakePercentage}%
                                 </p>
                                 <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">
-                                    {dailyGoal - currentIntake > 0 ? `${dailyGoal - currentIntake}ml to go` : 'Goal reached! 🎉'}
+                                    {dailyGoal - currentIntake > 0 ? `${formatIntake(dailyGoal - currentIntake, unit)} to go` : 'Goal reached! 🎉'}
                                 </p>
                             </div>
                         </div>

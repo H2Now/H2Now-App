@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
 import LoadingSpinner from "../../components/LoadingSpinner"
+import { useUnitPreference, formatIntake as formatIntakeUtil } from "../../hooks/usePreferences"
 
 export default function BottleIntake({ onDataChange }) {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const unit = useUnitPreference()
     const [intakeData, setIntakeData] = useState([])
     const [editingId, setEditingId] = useState(null)
     const [editAmount, setEditAmount] = useState("")
@@ -69,14 +71,6 @@ export default function BottleIntake({ onDataChange }) {
 
         fetchTodayIntake()
     }, [])
-
-    // Format intake value for display
-    const formatIntake = (ml) => {
-        if (ml >= 1000) {
-            return `${(ml / 1000).toFixed(2)}L`
-        }
-        return `${ml}ml`
-    }
 
     const handleEdit = (entry) => {
         setEditingId(entry.id)
@@ -245,7 +239,7 @@ export default function BottleIntake({ onDataChange }) {
                                                 placeholder="Enter amount"
                                                 autoFocus
                                             />
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">ml</span>
+                                            <span className="text-sm text-gray-600 dark:text-gray-400">{unit}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
@@ -276,7 +270,7 @@ export default function BottleIntake({ onDataChange }) {
                                                     {entry.time}
                                                 </p>
                                                 <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                                    {formatIntake(entry.amount)}
+                                                    {formatIntakeUtil(entry.amount, unit)}
                                                 </p>
                                             </div>
                                         </div>

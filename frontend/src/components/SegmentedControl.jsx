@@ -7,11 +7,11 @@ export default function SegmentedControl({ state, setState }) {
 
             <button
                 type="button"
-                onClick={() => setState('l')}
-                className={`relative z-10 flex-1 h-full flex items-center justify-center text-sm font-medium transition-colors ${state === 'l' ? 'text-white' : 'text-slate-600 dark:text-gray-200'}`}
-                aria-pressed={state === 'l'}
+                onClick={() => setState('ml')}
+                className={`relative z-10 flex-1 h-full flex items-center justify-center text-sm font-medium transition-colors ${state === 'ml' ? 'text-white' : 'text-slate-600 dark:text-gray-200'}`}
+                aria-pressed={state === 'ml'}
             >
-                l
+                ml
             </button>
 
             <button

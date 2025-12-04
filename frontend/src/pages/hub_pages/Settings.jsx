@@ -6,11 +6,22 @@ import Dropdown from "../../components/Dropdown"
 
 export default function Settings() {
     const API_URL = import.meta.env.VITE_API_URL || 'localhost:5000'
-    const [darkMode, setDarkMode] = useState(false)
-    const [unit, setUnit] = useState("l")
+
+    // ---- LocalStorage settings ----
+    const [darkMode, setDarkMode] = useState(() => {
+        const saved = localStorage.getItem('darkMode')
+        return saved ? JSON.parse(saved) : false
+    })
+
+    const [unit, setUnit] = useState(() => {
+        return localStorage.getItem('unitPreference') || 'ml'
+    })
+
+    // ---- Backend settings ----
     const [reminderFreq, setReminderFreq] = useState(1)
     const [bottleAlertEnabled, setBottleAlertEnabled] = useState(false)
 
+    // ---- Load backend prefs once ----
     useEffect(() => {
         fetchPreferences()
     }, [])
@@ -21,15 +32,17 @@ export default function Settings() {
                 credentials: "include"
             })
             const data = await res.json()
+
             if (res.ok && data.success) {
                 setBottleAlertEnabled(data.preferences.bottleAlertEnabled)
                 setReminderFreq(data.preferences.reminderFreq)
             }
         } catch (error) {
-            alert("Failed to fetch user settings", error)
+            console.error("Failed to fetch user settings:", error)
         }
     }
 
+    // ---- Save backend prefs ----
     const savePreferences = async () => {
         try {
             const res = await fetch(`${API_URL}/user/preferences`, {
@@ -42,31 +55,44 @@ export default function Settings() {
                 })
             })
             const data = await res.json()
-
-            if (res.ok && data.success) {
-                console.log("Settings saved!")
-                // settings saved modal
-            } else {
+            if (!res.ok || !data.success) {
                 console.log(data.message || "Failed to save settings")
             }
         } catch (error) {
-            alert("Failed to save settings", error)
+            console.error("Failed to save settings:", error)
         }
     }
 
-    // pr-[37px]
+    // ---- Save localStorage prefs ----
+    useEffect(() => {
+        localStorage.setItem('darkMode', JSON.stringify(darkMode))
+        if (darkMode) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    }, [darkMode])
+
+    useEffect(() => {
+        localStorage.setItem('unitPreference', unit)
+    }, [unit])
+
     return (
         <div className="min-w-[320px] min-h-[644px] flex flex-col items-center">
+            
+            {/* Dark Mode */}
             <div className="w-[293px] h-[75px] mt-[50px] mb-[12.5px] pr-[25px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center justify-between px-4">
                 <p className="ml-[3px] text-[20px] font-semibold text-gray-900 dark:text-gray-100">Dark Mode</p>
                 <Switch state={darkMode} setState={setDarkMode} />
             </div>
 
+            {/* Unit */}
             <div className="w-[293px] h-[75px] my-[12.5px] pr-[16px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center justify-between px-4">
                 <p className="ml-[3px] text-[20px] font-semibold text-gray-900 dark:text-gray-100">Units</p>
-                <SegmentedControl state={unit} setState={setUnit} />
+                <SegmentedControl state={unit} setState={setUnit} options={['ml', 'oz']} />
             </div>
 
+            {/* Notifications */}
             <div className="w-[293px] h-[75px] my-[12.5px] pr-[16px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 relative flex items-center justify-between px-4">
                 <p className="ml-[3px] text-[20px] font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
                 <Dropdown 
@@ -77,6 +103,7 @@ export default function Settings() {
                     onSave={savePreferences}
                 />
             </div>
+
         </div>
     )
 }
