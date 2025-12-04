@@ -845,5 +845,43 @@ def update_preferences():
         conn.close()
 
     return jsonify({"success": True, "message": "User Preferences updated"}), 200
+
+
+@app.route("/water_bottle/<bottle_id>/settings", methods=["GET"])
+def get_bottle_settings(bottle_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT b.bottleID, b.userID, 
+            COALESCE(up.reminderFreq, 1) as reminderFreq,
+            COALESCE(up.bottleAlertEnabled, FALSE) as bottleAlertEnabled
+            FROM Bottle b
+            LEFT JOIN UserPreferences up ON b.userID = up.userID
+            WHERE b.bottleID = %s
+            """, (bottle_id,)
+        )
+
+        settings = cursor.fetchone()
+
+        if not settings:
+            return jsonify({"success": False, "message": "Bottle not found."}), 404
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({
+        "success": True,
+        "settings": {
+            "bottleID": settings["bottleID"],
+            "reminderFreq": settings["reminderFreq"],
+            "bottleAlertEnabled": bool(settings["bottleAlertEnabled"])
+        }
+    }), 200
+
+
 if __name__ == "__main__":
     app.run()
