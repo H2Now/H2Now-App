@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-import Switch from "./Swtich"
+import Switch from "./Switch"
 
 export default function Dropdown() {
     const [open, setOpen] = useState(false),
