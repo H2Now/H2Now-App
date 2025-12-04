@@ -1,19 +1,15 @@
 import { useEffect } from "react"
-import { Route, Routes, useLocation } from "react-router-dom"
+import { Route, Routes } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Hub from "./pages/hub_pages/Hub"
 import Account from "./pages/hub_pages/Account"
 import Reminders from "./pages/Reminders"
-import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import PublicRoute from "./components/PublicRoute"
 import ProtectedRoute from "./components/ProtectedRoute"
 
 function App() {
-	const location = useLocation();
-	const hideNavbarRoutes = ['/login', '/register'];
-	const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
 
 	// Apply preferred mode on initial load
 	useEffect(() => {
@@ -27,7 +23,6 @@ function App() {
 
 	return (
 		<>
-			{shouldShowNavbar && <Navbar />}
 			<Routes>
 				<Route path="/" element={<HomePage />}></Route>
 				<Route element={<PublicRoute />}>
