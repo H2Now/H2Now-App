@@ -18,13 +18,17 @@ export default function Settings() {
 
     // Save dark mode preference and apply it to UI
     useEffect(() => {
-        localStorage.getItem('darkMode', JSON.stringify(darkMode))
-        console.log(darkMode)
+        localStorage.setItem('darkMode', JSON.stringify(darkMode))
+        console.log('Dark mode changed to:', darkMode)
+        console.log('Setting localStorage darkMode to:', JSON.stringify(darkMode))
         if (darkMode) {
             document.documentElement.classList.add('dark')
+            console.log('Added dark class to document')
         } else {
             document.documentElement.classList.remove('dark')
+            console.log('Removed dark class from document')
         }
+        console.log('Current classes:', document.documentElement.className)
     }, [darkMode])
 
     // Save unit preference 

@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Route, Routes, useLocation } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Hub from "./pages/hub_pages/Hub"
@@ -13,6 +14,16 @@ function App() {
 	const location = useLocation();
 	const hideNavbarRoutes = ['/login', '/register'];
 	const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
+
+	// Apply preferred mode on initial load
+	useEffect(() => {
+		const darkMode = localStorage.getItem('darkMode')
+		if (darkMode && JSON.parse(darkMode)) {
+			document.documentElement.classList.add('dark')
+		} else {
+			document.documentElement.classList.remove('dark')
+		}
+	}, [])
 
 	return (
 		<>
