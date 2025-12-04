@@ -18,15 +18,15 @@ export default function MyBottle() {
             {/* Goal Overview and Bottle Visualization */}
             <Bottle ref={bottleRef} onConnectionChange={setIsBottleConnected} />
 
-            {/* Desktop Layout: Side-by-side on large screens, stacked on mobile */}
+            {/* Desktop Layout: Stacked vertically */}
             {isBottleConnected && (
-                <div className="w-full flex flex-col lg:flex-row items-start justify-center gap-6 lg:gap-8">
-                    {/* Mini Navbar - Full width on mobile, auto width on desktop */}
-                    <div className="w-full lg:w-auto lg:min-w-[320px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-2 lg:sticky lg:top-8">
-                        <div className="flex lg:flex-col items-center lg:items-stretch justify-between gap-2">
+                <div className="w-full flex flex-col items-center justify-center gap-6 lg:gap-8">
+                    {/* Mini Navbar - Horizontal on all screen sizes */}
+                    <div className="w-full max-w-[900px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-2">
+                        <div className="flex items-center justify-between gap-2">
                             <button
                                 onClick={() => setActiveSection("intake")}
-                                className={`flex-1 lg:w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
+                                className={`flex-1 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
                                     activeSection === "intake"
                                         ? "bg-blue-500 text-white shadow-md scale-105"
                                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:scale-102 active:scale-95"
@@ -36,7 +36,7 @@ export default function MyBottle() {
                             </button>
                             <button
                                 onClick={() => setActiveSection("settings")}
-                                className={`flex-1 lg:w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
+                                className={`flex-1 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
                                     activeSection === "settings"
                                         ? "bg-blue-500 text-white shadow-md scale-105"
                                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:scale-102 active:scale-95"
@@ -46,7 +46,7 @@ export default function MyBottle() {
                             </button>
                             <button
                                 onClick={() => setActiveSection("activity")}
-                                className={`flex-1 lg:w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
+                                className={`flex-1 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-300 ease-in-out transform ${
                                     activeSection === "activity"
                                         ? "bg-blue-500 text-white shadow-md scale-105"
                                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 hover:scale-102 active:scale-95"
@@ -57,8 +57,8 @@ export default function MyBottle() {
                         </div>
                     </div>
 
-                    {/* Dynamic Content Box - Expands on desktop */}
-                    <div className="w-full lg:flex-1 lg:max-w-[900px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
+                    {/* Dynamic Content Box */}
+                    <div className="w-full max-w-[900px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
                         {activeSection === "intake" ? (
                             <BottleIntake onDataChange={() => bottleRef.current?.refreshBottleData()} />
                         ) : activeSection === "settings" ? (

@@ -378,11 +378,8 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                 </div>
             </div>
 
-            {/* Bottle and Overview - Responsive Layout */}
-            <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 w-full max-w-7xl">
-
-                {/* Daily Goal Overview */}
-                <div className="w-full max-w-[380px] lg:w-[420px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
+            {/* Daily Goal Overview */}
+            <div className="w-full max-w-[380px] lg:max-w-[600px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-gray-100">Today's Goal</h3>
                         <span className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">{today}</span>
@@ -393,27 +390,29 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                             <LoadingSpinner size="h-10 w-10" />
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
-                                    {formatIntake(currentIntake, unit)}
-                                </p>
-                                <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">of {formatIntake(dailyGoal, unit)}</p>
+                        <>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
+                                        {formatIntake(currentIntake, unit)}
+                                    </p>
+                                    <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">of {formatIntake(dailyGoal, unit)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-3xl lg:text-4xl font-bold text-gray-700 dark:text-gray-300">
+                                        {intakePercentage > 100 ? 100 : intakePercentage}%
+                                    </p>
+                                    <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">
+                                        {dailyGoal - currentIntake > 0 ? `${formatIntake(dailyGoal - currentIntake, unit)} to go` : 'Goal reached! 🎉'}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-3xl lg:text-4xl font-bold text-gray-700 dark:text-gray-300">
-                                    {intakePercentage > 100 ? 100 : intakePercentage}%
-                                </p>
-                                <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">
-                                    {dailyGoal - currentIntake > 0 ? `${formatIntake(dailyGoal - currentIntake, unit)} to go` : 'Goal reached! 🎉'}
-                                </p>
-                            </div>
-                        </div>
+                        </>
                     )}
-                </div>
+            </div>
 
-                {/* Bottle Visualization Section with Name */}
-                <div className="flex flex-col items-center gap-5">
+            {/* Bottle Visualization Section with Name */}
+            <div className="flex flex-col items-center gap-5">
                     {/* Bottle Name Badge - Only show when bottle exists */}
                     {hasBottleInDB && bottleName && (
                         <div className="px-5 py-2.5 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/40 dark:to-cyan-900/40 
@@ -569,7 +568,6 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                         </div>
                     )}
                 </div>
-            </div>
         </>
     )
 })
