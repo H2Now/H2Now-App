@@ -9,9 +9,10 @@ from flask_session import Session
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport import requests as google_requests
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # ONLY FOR DEV - comment this line if app is in PROD
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+# os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 load_dotenv()
 
@@ -29,7 +30,7 @@ CORS(app, origins=[
     "www.h2now.online",
     "h2now.online"
 ], supports_credentials=True)
-
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.secret_key = os.getenv("SECRET_KEY")
 
 # stores the session id in a file system (folder called flask_session)
@@ -39,7 +40,10 @@ app.config["SESSION_FILE_DIR"] = os.getenv("SESSION_FILE_DIR")
 app.config["SESSION_USE_SIGNER"] = True
 app.config["SESSION_PERMANENT"] = False
 # for prod
-# app.config["SESSION_COOKIE_DOMAIN"] = "h2now.online"
+app.config["SESSION_COOKIE_SECURE"] = True          # Cookie only sent over HTTPS
+app.config["SESSION_COOKIE_HTTPONLY"] = True        # Prevent JS access
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"       # Allow cookie on redirect from Google
+app.config["SESSION_COOKIE_DOMAIN"] = ".h2now.online"
 
 Session(app)
 
@@ -61,7 +65,7 @@ client_config = {
         "token_uri": "https://oauth2.googleapis.com/token",
         "redirect_uris": [
             "http://localhost:5000/auth/login/google/callback",
-            "https://h2now.online/auth/login/google/callback"
+            "https://h2now.online/api/auth/login/google/callback"
         ]
     }
 }
@@ -172,7 +176,7 @@ def google_login():
         client_config,
         scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", 
             "https://www.googleapis.com/auth/userinfo.profile"],
-        redirect_uri=f"{BACKEND_URL}/auth/login/google/callback"
+        redirect_uri=f"{PROD_URL}/api/auth/login/google/callback"
     )
     authorization_url, state = flow.authorization_url(
         access_type='offline',
@@ -191,14 +195,14 @@ def google_callback():
 
     if not state:
         print("error here")
-        return redirect(f"{FRONTEND_URL}/login?error=invalid_state")
+        return redirect(f"{PROD_URL}/login?error=invalid_state")
     
     flow = Flow.from_client_config(
         client_config,
         scopes=["openid", "https://www.googleapis.com/auth/userinfo.email",
             "https://www.googleapis.com/auth/userinfo.profile"],
         state=state,
-        redirect_uri=f"{BACKEND_URL}/auth/login/google/callback"
+        redirect_uri=f"{PROD_URL}/api/auth/login/google/callback"
     )
 
     try:
@@ -251,13 +255,13 @@ def google_callback():
             session["email"] = user["email"]
             print(f"Session set: user_id={session.get('user_id')}, email={session.get('email')}")  # DEBUG
             
-            return redirect(f"{FRONTEND_URL}/hub")
+            return redirect(f"{PROD_URL}/hub")
         finally:
             cursor.close()
             conn.close()
     except Exception as e:
         print(f"OAuth error: {e}")
-        return redirect(f"{FRONTEND_URL}/login?error=auth_failed")
+        return redirect(f"{PROD_URL}/login?error=auth_failed")
 
 # Logout endpoint
 @app.route("/auth/logout", methods=["GET"])
