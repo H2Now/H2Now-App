@@ -26,6 +26,8 @@ class BottleHardware:
         # Track weight when bottle is picked up
         self.pickup_weight = None
 
+    def update_reminder_settings(self, reminder_freq_mins, bottle_alert_enabled):
+        self.mpu6050.update_reminder_settings(reminder_freq_mins, bottle_alert_enabled)
 
     def _monitor_loop(self):
         try:
@@ -99,6 +101,14 @@ class BottleHardware:
             self.thread = Thread(target=self._monitor_loop, daemon=True)
             print("Done! Starting program.")
             self.thread.start()
+
+
+    def get_events(self):
+        events = []
+        while not self.events_queue.empty():
+            with self.lock:
+                events.append(self.events_queue.get())
+        return events
 
 
     # Tear down

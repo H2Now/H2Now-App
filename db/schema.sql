@@ -15,11 +15,13 @@ DROP TABLE IF EXISTS DrinkingSession;
 CREATE TABLE User (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NULL,
     name VARCHAR(150) NOT NULL,
     profilePic VARCHAR(255),
     streakStart DATE,
-    streak INT
+    streak INT,
+    google_id VARCHAR(255) UNIQUE,
+    auth_provider VARCHAR(50) DEFAULT 'local'
 );
 
 -- ==============================
@@ -30,7 +32,6 @@ CREATE TABLE Bottle (
     userID INT UNIQUE,
     bottleName VARCHAR(150),
     goal DECIMAL(6,2),
-    capacity DECIMAL(6,2) NOT NULL,
     connected BOOLEAN DEFAULT FALSE,
     connectedAt DATETIME,
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
@@ -70,7 +71,7 @@ CREATE TABLE Intake (
 -- ==============================
 CREATE TABLE UserPreferences (
     userID INT PRIMARY KEY,
-    reminderFreq INT NOT NULL,
-    themeMode ENUM('light','dark','system') DEFAULT 'system',
+    reminderFreq INT NOT NULL DEFAULT 0,
+    bottleAlertEnabled BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
 );

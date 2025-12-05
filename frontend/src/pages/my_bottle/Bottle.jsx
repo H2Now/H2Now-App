@@ -1,12 +1,7 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
 import usePubNub from "../../hooks/usePubNub"
-
-const LoadingSpinner = ({ size = "h-8 w-8", color = "text-blue-500" }) => (
-    <svg className={`animate-spin ${size} ${color}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-)
+import LoadingSpinner from "../../components/LoadingSpinner"
+import { useUnitPreference, formatIntake } from "../../hooks/usePreferences"
 
 const ErrorMessage = ({ message }) => (
     <div className="w-[293px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
@@ -21,6 +16,7 @@ const ErrorMessage = ({ message }) => (
 
 const Bottle = forwardRef(({ onConnectionChange }, ref) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const unit = useUnitPreference()
 
     const [userId, setUserId] = useState(null)
     const [hasBottleInDB, setHasBottleInDB] = useState(false)
@@ -56,7 +52,9 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
     // Handle real-time updates from PubNub
     useEffect(() => {
-        setIsPiOnline(pubnubStatus)
+        if (pubnubStatus !== null) {
+            setIsPiOnline(pubnubStatus)
+        }
         if (latestIntake) {
             setCurrentIntake(latestIntake.total)
         }
@@ -336,7 +334,7 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
 
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Daily Goal (ml)
+                                    Daily Goal ({unit})
                                 </label>
                                 <input
                                     type="number"
@@ -380,12 +378,41 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                 </div>
             </div>
 
-            {/* Bottle and Overview - Responsive Layout */}
-            {/* Mobile: Stacked vertically | Desktop: Side-by-side with enhanced cards */}
-            <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-10 w-full max-w-7xl">
+            {/* Daily Goal Overview */}
+            <div className="w-full max-w-[380px] lg:max-w-[600px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-gray-100">Today's Goal</h3>
+                        <span className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">{today}</span>
+                    </div>
 
-                {/* Bottle Visualization Section - Shows first on mobile, left on desktop */}
-                <div className="flex flex-col items-center gap-5 lg:order-2">
+                    {loadingIntake ? (
+                        <div className="flex items-center justify-center py-12">
+                            <LoadingSpinner size="h-10 w-10" />
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
+                                        {formatIntake(currentIntake, unit)}
+                                    </p>
+                                    <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">of {formatIntake(dailyGoal, unit)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-3xl lg:text-4xl font-bold text-gray-700 dark:text-gray-300">
+                                        {intakePercentage > 100 ? 100 : intakePercentage}%
+                                    </p>
+                                    <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-1">
+                                        {dailyGoal - currentIntake > 0 ? `${formatIntake(dailyGoal - currentIntake, unit)} to go` : 'Goal reached! 🎉'}
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
+            </div>
+
+            {/* Bottle Visualization Section with Name */}
+            <div className="flex flex-col items-center gap-5">
                     {/* Bottle Name Badge - Only show when bottle exists */}
                     {hasBottleInDB && bottleName && (
                         <div className="px-5 py-2.5 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/40 dark:to-cyan-900/40 
@@ -541,110 +568,6 @@ const Bottle = forwardRef(({ onConnectionChange }, ref) => {
                         </div>
                     )}
                 </div>
-
-                {/* Daily Goal Overview - Shows after bottle on mobile, right side on desktop */}
-                <div className="w-full max-w-[380px] lg:max-w-none lg:w-[420px] lg:order-1">
-                    {/* Main Stats Card */}
-                    <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/40 dark:border-slate-700/40 p-6 lg:p-8 mb-4 lg:mb-6">
-                        <div className="flex items-center justify-between mb-4 lg:mb-6">
-                            <h3 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-gray-100">Today's Goal</h3>
-                            <span className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">{today}</span>
-                        </div>
-
-                        {loadingIntake ? (
-                            <div className="flex items-center justify-center py-12">
-                                <LoadingSpinner size="h-10 w-10" />
-                            </div>
-                        ) : (
-                            <>
-                                {/* Progress Ring - Desktop Only */}
-                                <div className="hidden lg:flex items-center justify-center mb-6">
-                                    <div className="relative w-48 h-48">
-                                        {/* Background Circle */}
-                                        <svg className="transform -rotate-90 w-48 h-48">
-                                            <circle
-                                                cx="96"
-                                                cy="96"
-                                                r="88"
-                                                stroke="currentColor"
-                                                strokeWidth="12"
-                                                fill="none"
-                                                className="text-gray-200 dark:text-slate-700"
-                                            />
-                                            {/* Progress Circle */}
-                                            <circle
-                                                cx="96"
-                                                cy="96"
-                                                r="88"
-                                                stroke="currentColor"
-                                                strokeWidth="12"
-                                                fill="none"
-                                                strokeDasharray={`${2 * Math.PI * 88}`}
-                                                strokeDashoffset={`${2 * Math.PI * 88 * (1 - intakePercentage / 100)}`}
-                                                className="text-blue-500 dark:text-blue-400 transition-all duration-500"
-                                                strokeLinecap="round"
-                                            />
-                                        </svg>
-                                        {/* Center Text */}
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">
-                                                {intakePercentage}%
-                                            </p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Complete</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Stats Grid */}
-                                <div className="flex items-center justify-between lg:flex-col lg:gap-4">
-                                    <div className="lg:w-full lg:bg-gradient-to-br lg:from-blue-50 lg:to-cyan-50 lg:dark:from-blue-900/20 lg:dark:to-cyan-900/20 lg:rounded-xl lg:p-4 lg:border lg:border-blue-100 lg:dark:border-blue-800/40">
-                                        <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Current Intake</p>
-                                        <p className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
-                                            {currentIntake}ml
-                                        </p>
-                                        <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">of {dailyGoal}ml</p>
-                                    </div>
-                                    <div className="text-right lg:text-left lg:w-full lg:bg-gradient-to-br lg:from-slate-50 lg:to-gray-50 lg:dark:from-slate-800/40 lg:dark:to-slate-700/40 lg:rounded-xl lg:p-4 lg:border lg:border-gray-200 lg:dark:border-slate-600/40">
-                                        <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 lg:mb-2">Remaining</p>
-                                        <p className="text-3xl lg:text-4xl font-bold text-gray-700 dark:text-gray-300">
-                                            {dailyGoal - currentIntake > 0 ? `${dailyGoal - currentIntake}ml` : '0ml'}
-                                        </p>
-                                        <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                            {dailyGoal - currentIntake > 0 ? 'to go' : 'Goal reached! 🎉'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Quick Stats - Desktop Only */}
-                    <div className="hidden lg:grid grid-cols-2 gap-4">
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800/40">
-                            <div className="flex items-center gap-2 mb-2">
-                                <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="text-xs font-medium text-green-700 dark:text-green-300">Status</span>
-                            </div>
-                            <p className="text-lg font-bold text-green-800 dark:text-green-200">
-                                {isPiOnline ? 'Connected' : 'Offline'}
-                            </p>
-                        </div>
-                        <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl p-4 border border-purple-100 dark:border-purple-800/40">
-                            <div className="flex items-center gap-2 mb-2">
-                                <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Progress</span>
-                            </div>
-                            <p className="text-lg font-bold text-purple-800 dark:text-purple-200">
-                                {intakePercentage >= 100 ? 'Completed' : intakePercentage >= 50 ? 'On Track' : 'Getting Started'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </>
     )
 })

@@ -8,7 +8,7 @@ export default function Account() {
     // allow overriding backend URL via Vite env (VITE_API_URL). Falls back to localhost:5000.
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     const [modal, setModal] = useState(false)
-    const [user, setUser] = useState({ name: "", email: "" })
+    const [user, setUser] = useState({ name: "", email: "", profilePic: "" })
     const [loading, setLoading] = useState(true)
     // which field is being edited: null | 'name' | 'password'
     const [editingField, setEditingField] = useState(null)
@@ -25,7 +25,7 @@ export default function Account() {
                 })
                 const data = await res.json()
                 if (res.ok && data.success) {
-                    setUser({ name: data.user.name, email: data.user.email })
+                    setUser({ name: data.user.name, email: data.user.email, profilePic: data.user.profilePic })
                     setForm((f) => ({ ...f, name: data.user.name }))
                 } else if (res.status === 401) {
                     setMessage({ type: 'warning', text: "Not authenticated" })
@@ -56,7 +56,7 @@ export default function Account() {
                             className="w-[125px] h-[44px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
                             onClick={async () => {
                                 try {
-                                    const res = await fetch(`${API_URL}/api/auth/logout`, {
+                                    const res = await fetch(`${API_URL}/auth/logout`, {
                                         credentials: "include",
                                     })
                                     if (res.ok) {
@@ -77,8 +77,21 @@ export default function Account() {
 
             {/* Profile card */}
             <div className="w-[293px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex flex-col items-center py-6">
-                <div className="w-24 h-24 bg-gray-200 dark:bg-slate-700 rounded-full flex items-center justify-center cursor-pointer">
-                    <img src={Camera} className="w-12 h-12" />
+                <div className="w-24 h-24 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden flex items-center justify-center">
+                    {user.profilePic ? (
+                        <img
+                            src={user.profilePic}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                        />
+                    ) : (
+                        <img
+                            src={Camera}
+                            alt="Upload profile"
+                            className="w-12 h-12"
+                        />
+                    )}
                 </div>
                 <p className="mt-4 text-gray-900 dark:text-gray-100 text-[20px] font-semibold">{loading ? 'Loading...' : `Welcome, ${user.name || 'User'}`}</p>
             </div>
@@ -112,179 +125,179 @@ export default function Account() {
 
             {/* Info + Actions column */}
             <div className="mt-6 flex flex-col items-center gap-4">
-                        <div className="w-[293px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 py-3">
-                            <div className="flex-1">
-                                <p className="text-[16px] text-gray-700 dark:text-gray-200">Name</p>
-                                {editingField === 'name' ? (
-                                    <>
-                                        <input
-                                            type="text"
-                                            value={form.name}
-                                            onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                            className="mt-3 w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
-                                        />
-                                        <div className="w-full mt-4 flex justify-end gap-3">
-                                            <button
-                                                className="text-sm px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200"
-                                                onClick={async () => {
-                                                    setMessage(null)
-                                                    try {
-                                                        const payload = { name: form.name }
-                                                        const res = await fetch(`${API_URL}/user`, {
-                                                            method: 'PUT',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            credentials: 'include',
-                                                            body: JSON.stringify(payload)
-                                                        })
-                                                        const data = await res.json()
-                                                        if (res.ok && data.success) {
-                                                            setUser((u) => ({ ...u, name: form.name }))
-                                                            setEditingField(null)
-                                                            setMessage({ type: 'success', text: 'Name updated' })
-                                                        } else {
-                                                            setMessage({ type: 'error', text: data?.message || 'Update failed' })
-                                                        }
-                                                    } catch (err) {
-                                                        setMessage({ type: 'error', text: 'Network error' })
-                                                    }
-                                                }}
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-md transition-colors duration-200"
-                                                onClick={() => { setEditingField(null); setForm({ ...form, name: user.name }); setMessage(null) }}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <p className="text-[14px] text-gray-900 dark:text-gray-100">{loading ? '...' : user.name}</p>
-                                )}
-                            </div>
-
-                            <div className="ml-3">
-                                {editingField !== 'name' && (
+                <div className="w-[293px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 py-3">
+                    <div className="flex-1">
+                        <p className="text-[16px] text-gray-700 dark:text-gray-200">Name</p>
+                        {editingField === 'name' ? (
+                            <>
+                                <input
+                                    type="text"
+                                    value={form.name}
+                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                    className="mt-3 w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
+                                />
+                                <div className="w-full mt-4 flex justify-end gap-3">
                                     <button
-                                        onClick={() => { setEditingField('name'); setForm((f) => ({ ...f, name: user.name })); setMessage(null) }}
-                                        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700"
-                                        aria-label="Edit name"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 16 16">
-                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
-                                        </svg>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-
-                        <div className="w-[293px] h-[75px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4">
-                            <div className="flex-1">
-                                <p className="text-[16px] text-gray-700 dark:text-gray-200">Email</p>
-                                <p className="text-[14px] text-gray-900 dark:text-gray-100">{loading ? '...' : user.email}</p>
-                            </div>
-                        </div>
-
-                        <div className="w-[293px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 py-3">
-                            <div className="flex-1">
-                                <p className="text-[16px] text-gray-700 dark:text-gray-200">Password</p>
-                                {editingField === 'password' ? (
-                                    <>
-                                        <div className="flex flex-col gap-2">
-                                            <input
-                                                type="password"
-                                                placeholder="New password"
-                                                value={form.password}
-                                                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                                className="mt-3 w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
-                                            />
-                                            <input
-                                                type="password"
-                                                placeholder="Confirm new password"
-                                                value={form.confirmPassword}
-                                                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                                                className="w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
-                                            />
-                                        </div>
-                                        <div className="w-full mt-4 flex justify-end gap-3">
-                                            <button
-                                                className="text-sm px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200"
-                                                onClick={async () => {
-                                                    setMessage(null)
-                                                    if (form.password && form.password !== form.confirmPassword) {
-                                                        setMessage({ type: 'error', text: 'Passwords do not match' })
-                                                        return
-                                                    }
-                                                    try {
-                                                        const payload = {}
-                                                        if (form.password) payload.password = form.password
-                                                        const res = await fetch(`${API_URL}/user`, {
-                                                            method: 'PUT',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            credentials: 'include',
-                                                            body: JSON.stringify(payload)
-                                                        })
-                                                        const data = await res.json()
-                                                        if (res.ok && data.success) {
-                                                            setEditingField(null)
-                                                            setForm((f) => ({ ...f, password: '', confirmPassword: '' }))
-                                                            setMessage({ type: 'success', text: 'Password updated' })
-                                                        } else {
-                                                            setMessage({ type: 'error', text: data?.message || 'Update failed' })
-                                                        }
-                                                    } catch {
-                                                        setMessage({ type: 'error', text: 'Network error' })
-                                                    }
-                                                }}
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-md transition-colors duration-200"
-                                                onClick={() => {
+                                        className="text-sm px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200"
+                                        onClick={async () => {
+                                            setMessage(null)
+                                            try {
+                                                const payload = { name: form.name }
+                                                const res = await fetch(`${API_URL}/user`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    credentials: 'include',
+                                                    body: JSON.stringify(payload)
+                                                })
+                                                const data = await res.json()
+                                                if (res.ok && data.success) {
+                                                    setUser((u) => ({ ...u, name: form.name }))
                                                     setEditingField(null)
-                                                    setForm({ ...form, password: '', confirmPassword: '' })
-                                                    setMessage(null)
-                                                }}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <p className="text-[14px] text-gray-900 dark:text-gray-100">********</p>
-                                )}
-                            </div>
-
-                            <div className="ml-3">
-                                {editingField !== 'password' && (
-                                    <button
-                                        onClick={() => { setEditingField('password'); setForm((f) => ({ ...f, password: '', confirmPassword: '' })); setMessage(null) }}
-                                        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700"
-                                        aria-label="Edit password"
+                                                    setMessage({ type: 'success', text: 'Name updated' })
+                                                } else {
+                                                    setMessage({ type: 'error', text: data?.message || 'Update failed' })
+                                                }
+                                            } catch (err) {
+                                                setMessage({ type: 'error', text: 'Network error' })
+                                            }
+                                        }}
                                     >
-                                        {/* Same SVG as Name field */}
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 16 16">
-                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
-                                        </svg>
+                                        Save
                                     </button>
-                                )}
-                            </div>
-                        </div>
+                                    <button
+                                        className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-md transition-colors duration-200"
+                                        onClick={() => { setEditingField(null); setForm({ ...form, name: user.name }); setMessage(null) }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-[14px] text-gray-900 dark:text-gray-100">{loading ? '...' : user.name}</p>
+                        )}
+                    </div>
 
-
-                        <div className="mt-5 flex items-center gap-4">
+                    <div className="ml-3">
+                        {editingField !== 'name' && (
                             <button
-                                className="w-[150px] h-[44px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
-                                onClick={() => setModal(true)}
+                                onClick={() => { setEditingField('name'); setForm((f) => ({ ...f, name: user.name })); setMessage(null) }}
+                                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700"
+                                aria-label="Edit name"
                             >
-                                <img src={Logout} className="w-5 h-5 mr-3" />
-                                <span className="text-white">Log Out</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 16 16">
+                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                                </svg>
                             </button>
-                        </div>
+                        )}
                     </div>
                 </div>
+
+
+                <div className="w-[293px] h-[75px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4">
+                    <div className="flex-1">
+                        <p className="text-[16px] text-gray-700 dark:text-gray-200">Email</p>
+                        <p className="text-[14px] text-gray-900 dark:text-gray-100">{loading ? '...' : user.email}</p>
+                    </div>
+                </div>
+
+                <div className="w-[293px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 py-3">
+                    <div className="flex-1">
+                        <p className="text-[16px] text-gray-700 dark:text-gray-200">Password</p>
+                        {editingField === 'password' ? (
+                            <>
+                                <div className="flex flex-col gap-2">
+                                    <input
+                                        type="password"
+                                        placeholder="New password"
+                                        value={form.password}
+                                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                        className="mt-3 w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Confirm new password"
+                                        value={form.confirmPassword}
+                                        onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                                        className="w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
+                                    />
+                                </div>
+                                <div className="w-full mt-4 flex justify-end gap-3">
+                                    <button
+                                        className="text-sm px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200"
+                                        onClick={async () => {
+                                            setMessage(null)
+                                            if (form.password && form.password !== form.confirmPassword) {
+                                                setMessage({ type: 'error', text: 'Passwords do not match' })
+                                                return
+                                            }
+                                            try {
+                                                const payload = {}
+                                                if (form.password) payload.password = form.password
+                                                const res = await fetch(`${API_URL}/user`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    credentials: 'include',
+                                                    body: JSON.stringify(payload)
+                                                })
+                                                const data = await res.json()
+                                                if (res.ok && data.success) {
+                                                    setEditingField(null)
+                                                    setForm((f) => ({ ...f, password: '', confirmPassword: '' }))
+                                                    setMessage({ type: 'success', text: 'Password updated' })
+                                                } else {
+                                                    setMessage({ type: 'error', text: data?.message || 'Update failed' })
+                                                }
+                                            } catch {
+                                                setMessage({ type: 'error', text: 'Network error' })
+                                            }
+                                        }}
+                                    >
+                                        Save
+                                    </button>
+                                    <button
+                                        className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-md transition-colors duration-200"
+                                        onClick={() => {
+                                            setEditingField(null)
+                                            setForm({ ...form, password: '', confirmPassword: '' })
+                                            setMessage(null)
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-[14px] text-gray-900 dark:text-gray-100">********</p>
+                        )}
+                    </div>
+
+                    <div className="ml-3">
+                        {editingField !== 'password' && (
+                            <button
+                                onClick={() => { setEditingField('password'); setForm((f) => ({ ...f, password: '', confirmPassword: '' })); setMessage(null) }}
+                                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700"
+                                aria-label="Edit password"
+                            >
+                                {/* Same SVG as Name field */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 16 16">
+                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+
+                <div className="mt-5 flex items-center gap-4">
+                    <button
+                        className="w-[150px] h-[44px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
+                        onClick={() => setModal(true)}
+                    >
+                        <img src={Logout} className="w-5 h-5 mr-3" />
+                        <span className="text-white">Log Out</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     )
 }

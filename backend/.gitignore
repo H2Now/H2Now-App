@@ -4,3 +4,6 @@ __pycache__/
 venv
 .env.production
 h2now.wsgi
+tests/__pycache__
+tests/.pytest_cache
+tests/flask_session
