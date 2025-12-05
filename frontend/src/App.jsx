@@ -28,11 +28,11 @@ function App() {
 				<Route element={<PublicRoute />}>
 					<Route path="/login" element={<LoginPage />}></Route>
 					<Route path="/register" element={<RegisterPage />}></Route>
-				</Route>	
-			<Route element={<ProtectedRoute />}>
-				<Route path="/hub" element={<Hub />}></Route>
-				<Route path="/hub/account" element={<Account />}></Route>
-				<Route path="/reminders" element={<Reminders />}></Route>
+				</Route>
+				<Route element={<ProtectedRoute />}>
+					<Route path="/hub" element={<Hub />}></Route>
+					<Route path="/hub/account" element={<Account />}></Route>
+					<Route path="/reminders" element={<Reminders />}></Route>
 				</Route>
 			</Routes>
 		</>

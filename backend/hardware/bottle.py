@@ -103,6 +103,14 @@ class BottleHardware:
             self.thread.start()
 
 
+    def get_events(self):
+        events = []
+        while not self.events_queue.empty():
+            with self.lock:
+                events.append(self.events_queue.get())
+        return events
+
+
     # Tear down
     def stop(self):
         self.running = False
