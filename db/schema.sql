@@ -3,11 +3,12 @@ CREATE DATABASE IF NOT EXISTS H2Now;
 USE H2Now;
 
 -- Drop tables if they already exist (to avoid conflicts)
+-- Must drop in reverse order of dependencies (child tables first)
 DROP TABLE IF EXISTS Intake;
+DROP TABLE IF EXISTS DrinkingSession;
 DROP TABLE IF EXISTS UserPreferences;
 DROP TABLE IF EXISTS Bottle;
 DROP TABLE IF EXISTS User;
-DROP TABLE IF EXISTS DrinkingSession;
 
 -- ==============================
 -- USER TABLE
