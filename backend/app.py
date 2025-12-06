@@ -413,6 +413,23 @@ def reset_water_intake():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT bottleID FROM Bottle WHERE userID = %s", (user_id,))
+        bottle = cursor.fetchone()
+
+        if bottle:
+            bottle_id = bottle["bottleID"]
+
+            # Clear drinking sessions
+            cursor.execute(
+                """
+                DELETE FROM DrinkingSession
+                WHERE bottleID = %s
+                AND DATE(startTime) = CURDATE()
+                """, (bottle_id,)
+            )
+
+        # Update intake to be 0
         cursor.execute(
             """
             UPDATE Intake
@@ -686,6 +703,7 @@ def update_drinking_session(session_id):
     return jsonify({"success": True, "message": "Drinking session was updated successfully"}), 200
   
 
+# Delete user's individual drinking sessions 
 @app.route("/user/water_bottle/intake/activity/<int:session_id>", methods=["DELETE"])  
 def delete_drinking_session(session_id):
     if "user_id" not in session:
@@ -749,6 +767,7 @@ def delete_drinking_session(session_id):
     return jsonify({"success": True, "message": "Drinking session has been deleted successfully."}), 200
 
 
+# Get user's preferences (reminder frequency, bottle alert enabled)
 @app.route("/user/preferences", methods=["GET"])
 def get_preferences():
     if "user_id" not in session:
@@ -793,6 +812,7 @@ def get_preferences():
     }), 200
 
 
+# Update user's preferences (reminder frequency, bottle alert enabled)
 @app.route("/user/preferences", methods=["PATCH"])
 def update_preferences():
     if "user_id" not in session:
@@ -853,6 +873,7 @@ def update_preferences():
     return jsonify({"success": True, "message": "User Preferences updated"}), 200
 
 
+# Endpoint for the raspberry Pi to poll (get reminder frequency and bottle alert enabled)
 @app.route("/water_bottle/<bottle_id>/settings", methods=["GET"])
 def get_bottle_settings(bottle_id):
     try:
@@ -888,6 +909,37 @@ def get_bottle_settings(bottle_id):
         }
     }), 200
 
+
+# Reset user's entire intake history
+@app.route("/user/water_bottle/activity", methods=["DELETE"])
+def reset_user_activity():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    user_id = session["user_id"]
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT bottleID FROM Bottle WHERE userID = %s", (user_id,))
+        bottle = cursor.fetchone()
+
+        if bottle:
+            bottle_id = bottle["bottleID"]
+
+            cursor.execute("DELETE FROM DrinkingSession WHERE bottleID = %s", (bottle_id,))
+            cursor.execute("DELETE FROM Intake WHERE userID=%s", (user_id,))
+
+            conn.commit()
+        else:
+            return jsonify({"success": False, "message": "Bottle ID not found."})
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"success": True, "message": "User drinking history has been deleted."}), 200
+ 
 
 if __name__ == "__main__":
     app.run()
