@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 
 import Camera from "../../assets/icons/camera.png"
 import Logout from "../../assets/icons/logout.png"
-import Back from "../../assets/icons/back.png"
 
 export default function Account() {
     // allow overriding backend URL via Vite env (VITE_API_URL). Falls back to localhost:5000.
@@ -42,7 +41,7 @@ export default function Account() {
     }, [])
 
     return (
-        <div className="w-full flex flex-col items-center">
+        <div className="w-full flex flex-col items-center max-w-[600px] mx-auto px-4">
             {/* Logout modal overlay */}
             <div className={`
                 fixed inset-0 bg-black/60 flex items-center justify-center z-40 transition-opacity duration-250
@@ -52,6 +51,12 @@ export default function Account() {
                     <p className="text-gray-900 dark:text-gray-100 text-[28px]">Log Out</p>
                     <p className="text-gray-700 dark:text-gray-200 text-[16px] text-center">Are you sure you want to log out?</p>
                     <div className="w-full pt-[15px] flex justify-center gap-4">
+                        <button
+                            className="w-[125px] h-[44px] bg-gray-300 hover:bg-gray-400 dark:bg-slate-600 dark:hover:bg-slate-500 transition-colors duration-200 rounded-lg flex items-center justify-center"
+                            onClick={() => setModal(false)}
+                        >
+                            <span className="text-gray-800 dark:text-gray-100">Cancel</span>
+                        </button>
                         <button
                             className="w-[125px] h-[44px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
                             onClick={async () => {
@@ -76,8 +81,8 @@ export default function Account() {
             </div>
 
             {/* Profile card */}
-            <div className="w-[293px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex flex-col items-center py-6">
-                <div className="w-24 h-24 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden flex items-center justify-center">
+            <div className="w-full max-w-[500px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex flex-col items-center py-8 lg:py-10">
+                <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden flex items-center justify-center">
                     {user.profilePic ? (
                         <img
                             src={user.profilePic}
@@ -89,15 +94,15 @@ export default function Account() {
                         <img
                             src={Camera}
                             alt="Upload profile"
-                            className="w-12 h-12"
+                            className="w-12 h-12 lg:w-16 lg:h-16"
                         />
                     )}
                 </div>
-                <p className="mt-4 text-gray-900 dark:text-gray-100 text-[20px] font-semibold">{loading ? 'Loading...' : `Welcome, ${user.name || 'User'}`}</p>
+                <p className="mt-4 text-gray-900 dark:text-gray-100 text-[20px] lg:text-[24px] font-semibold">{loading ? 'Loading...' : `Welcome, ${user.name || 'User'}`}</p>
             </div>
 
             {message && (
-                <div className={`w-[293px] mt-4 ${message.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300' : message.type === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300' : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'} px-4 py-3 rounded-lg`}>
+                <div className={`w-full max-w-[500px] mt-4 ${message.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300' : message.type === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300' : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'} px-4 py-3 rounded-lg`}>
                     <div className="flex items-start">
                         <div className="mr-2 mt-0.5">
                             {message.type === 'error' && (
@@ -124,17 +129,17 @@ export default function Account() {
             )}
 
             {/* Info + Actions column */}
-            <div className="mt-6 flex flex-col items-center gap-4">
-                <div className="w-[293px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 py-3">
+            <div className="mt-6 w-full flex flex-col items-center gap-4">
+                <div className="w-full max-w-[500px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 lg:px-6 py-4 lg:py-5">
                     <div className="flex-1">
-                        <p className="text-[16px] text-gray-700 dark:text-gray-200">Name</p>
+                        <p className="text-[16px] lg:text-[18px] text-gray-700 dark:text-gray-200">Name</p>
                         {editingField === 'name' ? (
                             <>
                                 <input
                                     type="text"
                                     value={form.name}
                                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                    className="mt-3 w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
+                                    className="mt-3 w-full h-10 lg:h-12 px-3 lg:px-4 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900 dark:text-gray-100"
                                 />
                                 <div className="w-full mt-4 flex justify-end gap-3">
                                     <button
@@ -193,16 +198,16 @@ export default function Account() {
                 </div>
 
 
-                <div className="w-[293px] h-[75px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4">
+                <div className="w-full max-w-[500px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 lg:px-6 py-4 lg:py-5">
                     <div className="flex-1">
-                        <p className="text-[16px] text-gray-700 dark:text-gray-200">Email</p>
-                        <p className="text-[14px] text-gray-900 dark:text-gray-100">{loading ? '...' : user.email}</p>
+                        <p className="text-[16px] lg:text-[18px] text-gray-700 dark:text-gray-200">Email</p>
+                        <p className="text-[14px] lg:text-[16px] text-gray-900 dark:text-gray-100">{loading ? '...' : user.email}</p>
                     </div>
                 </div>
 
-                <div className="w-[293px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 py-3">
+                <div className="w-full max-w-[500px] h-auto bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center px-4 lg:px-6 py-4 lg:py-5">
                     <div className="flex-1">
-                        <p className="text-[16px] text-gray-700 dark:text-gray-200">Password</p>
+                        <p className="text-[16px] lg:text-[18px] text-gray-700 dark:text-gray-200">Password</p>
                         {editingField === 'password' ? (
                             <>
                                 <div className="flex flex-col gap-2">
@@ -211,14 +216,14 @@ export default function Account() {
                                         placeholder="New password"
                                         value={form.password}
                                         onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                        className="mt-3 w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
+                                        className="mt-3 w-full h-10 lg:h-12 px-3 lg:px-4 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900 dark:text-gray-100"
                                     />
                                     <input
                                         type="password"
                                         placeholder="Confirm new password"
                                         value={form.confirmPassword}
                                         onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                                        className="w-full h-10 px-3 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900"
+                                        className="w-full h-10 lg:h-12 px-3 lg:px-4 rounded-md border border-gray-200/40 dark:border-slate-700/40 bg-white/90 dark:bg-slate-700/80 text-gray-900 dark:text-gray-100"
                                     />
                                 </div>
                                 <div className="w-full mt-4 flex justify-end gap-3">
@@ -288,13 +293,13 @@ export default function Account() {
                 </div>
 
 
-                <div className="mt-5 flex items-center gap-4">
+                <div className="mt-5 w-full max-w-[500px] flex items-center justify-center gap-4">
                     <button
-                        className="w-[150px] h-[44px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
+                        className="w-[150px] lg:w-[200px] h-[44px] lg:h-[50px] bg-red-500 hover:bg-red-600 transition-colors duration-200 rounded-lg flex items-center justify-center"
                         onClick={() => setModal(true)}
                     >
-                        <img src={Logout} className="w-5 h-5 mr-3" />
-                        <span className="text-white">Log Out</span>
+                        <img src={Logout} className="w-5 h-5 lg:w-6 lg:h-6 mr-3" />
+                        <span className="text-white text-[14px] lg:text-[16px]">Log Out</span>
                     </button>
                 </div>
             </div>
