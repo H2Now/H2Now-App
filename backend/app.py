@@ -447,7 +447,7 @@ def reset_water_intake():
     return jsonify({"success": True, "message": "Today's water intake has been reset."}), 200
 
 
-# Make edits to bottle name, bottle capacity, and daily goal
+# Make edits to bottle name and daily goal
 @app.route("/user/water_bottle/settings", methods=["PATCH"])
 def update_user_settings():
     if "user_id" not in session:
@@ -460,7 +460,6 @@ def update_user_settings():
         return jsonify({"success": False, "message": "Invalid JSON"}), 400
     
     bottle_name = data.get("bottleName")
-    capacity = data.get("capacity")
     goal = data.get("goal")
 
     updates = []
@@ -473,18 +472,6 @@ def update_user_settings():
         
         params.append(bottle_name)
         updates.append("bottleName = %s")
-
-    if capacity is not None:
-        try:
-            capacity = float(capacity)
-        except (TypeError, ValueError):
-            return jsonify({"success": False, "message": "Capacity must be a number."}), 400
-        
-        if capacity <= 0:
-            return jsonify({"success": False, "message": "Capacity must be greater than 0."}), 400
-    
-        updates.append("capacity = %s")
-        params.append(capacity)
 
     if goal is not None:
         try:
@@ -940,6 +927,98 @@ def reset_user_activity():
 
     return jsonify({"success": True, "message": "User drinking history has been deleted."}), 200
  
+
+# Check if bottleID exists in database, and does it have an owner
+@app.route("/water_bottle", methods=["GET"])
+def check_bottle_id():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+ 
+    bottle_id = request.args.get("bottleID")
+    
+    if not bottle_id:
+        return jsonify({"success": False, "message": "Bottle ID is required"}), 400
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT bottleID, userID FROM Bottle WHERE bottleID=%s", (bottle_id,))
+        bottle = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+    
+    if not bottle:
+        return jsonify({"success": False, "message": "Please enter a valid ID."}), 404
+    
+    # Check if bottle is already registered to another user
+    if bottle["userID"] is not None:
+        return jsonify({"success": False, "message": "Bottle is registered to another user"}), 400
+
+    return jsonify({"success": True, "bottleID": bottle["bottleID"]}), 200
+
+
+# Register a new bottle to the current user (update existing bottle row with user info)
+@app.route("/user/water_bottle/register", methods=["PUT"])
+def register_bottle():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+    
+    user_id = session["user_id"]
+    data = request.get_json(silent=True)
+    
+    if data is None:
+        return jsonify({"success": False, "message": "Invalid JSON"}), 400
+    
+    bottle_id = data.get("bottleID")
+    bottle_name = data.get("bottleName")
+    goal = data.get("goal")
+    
+    # Validate required fields
+    if not bottle_id:
+        return jsonify({"success": False, "message": "Bottle ID is required"}), 400
+    
+    if not bottle_name or bottle_name.strip() == "":
+        return jsonify({"success": False, "message": "Bottle name is required"}), 400
+    
+    if not goal:
+        return jsonify({"success": False, "message": "Daily goal is required"}), 400
+    
+    try:
+        goal = float(goal)
+        if goal <= 0:
+            return jsonify({"success": False, "message": "Goal must be greater than 0"}), 400
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Goal must be a valid number"}), 400
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Check if bottle exists and is not already registered
+        cursor.execute("SELECT bottleID, userID FROM Bottle WHERE bottleID=%s", (bottle_id,))
+        bottle = cursor.fetchone()
+        
+        if not bottle:
+            return jsonify({"success": False, "message": "Bottle not found"}), 404
+        
+        if bottle["userID"] is not None:
+            return jsonify({"success": False, "message": "Bottle is already registered to another user"}), 400
+        
+        # Update the bottle with user info
+        cursor.execute("""
+            UPDATE Bottle 
+            SET userID = %s, bottleName = %s, goal = %s 
+            WHERE bottleID = %s
+        """, (user_id, bottle_name.strip(), goal, bottle_id))
+        
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+    
+    return jsonify({"success": True, "message": "Bottle registered successfully"}), 200
+
 
 if __name__ == "__main__":
     app.run()
