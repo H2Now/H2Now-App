@@ -171,8 +171,35 @@ export default function BottleSettings({ onDataChange }) {
             } finally {
                 setLoading(false)
             }
+        } else if (action === "Reset Activity") {
+            setLoading(true)
+            setError("")
+
+            try {
+                const res = await fetch(`${API_URL}/user/water_bottle/activity`, {
+                    method: "DELETE",
+                    credentials: "include",
+                })
+
+                const data = await res.json()
+
+                if (res.ok && data.success) {
+                    // Notify parent component to refresh bottle data
+                    if (onDataChange) {
+                        onDataChange()
+                    }
+                    handleCloseModal()
+                } else {
+                    setError(data.message || "Failed to reset activity history")
+                }
+            } catch (error) {
+                console.error("Error resetting activity history: ", error)
+                setError("Something went wrong.. Please try again!")
+            } finally {
+                setLoading(false)
+            }
         } else {
-            // TODO: Handle other actions (Reset Activity, Delete Bottle)
+            // TODO: Handle Delete Bottle
             setAction("")
         }
     }
