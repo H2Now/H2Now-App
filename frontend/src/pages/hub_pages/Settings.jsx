@@ -78,23 +78,23 @@ export default function Settings() {
     }, [unit])
 
     return (
-        <div className="min-w-[320px] min-h-[644px] flex flex-col items-center">
+        <div className="min-w-[320px] min-h-[644px] flex flex-col items-center max-w-[600px] mx-auto px-4">
             
             {/* Dark Mode */}
-            <div className="w-[293px] h-[75px] mt-[50px] mb-[12.5px] pr-[25px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center justify-between px-4">
-                <p className="ml-[3px] text-[20px] font-semibold text-gray-900 dark:text-gray-100">Dark Mode</p>
+            <div className="w-full max-w-[500px] h-auto mt-[50px] mb-[12.5px] pr-[25px] lg:pr-[30px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center justify-between px-4 lg:px-6 py-5 lg:py-6">
+                <p className="ml-[3px] text-[20px] lg:text-[24px] font-semibold text-gray-900 dark:text-gray-100">Dark Mode</p>
                 <Switch state={darkMode} setState={setDarkMode} />
             </div>
 
             {/* Unit */}
-            <div className="w-[293px] h-[75px] my-[12.5px] pr-[16px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center justify-between px-4">
-                <p className="ml-[3px] text-[20px] font-semibold text-gray-900 dark:text-gray-100">Units</p>
+            <div className="w-full max-w-[500px] h-auto my-[12.5px] pr-[16px] lg:pr-[20px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 flex items-center justify-between px-4 lg:px-6 py-5 lg:py-6">
+                <p className="ml-[3px] text-[20px] lg:text-[24px] font-semibold text-gray-900 dark:text-gray-100">Units</p>
                 <SegmentedControl state={unit} setState={setUnit} options={['ml', 'oz']} />
             </div>
 
             {/* Notifications */}
-            <div className="w-[293px] h-[75px] my-[12.5px] pr-[16px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 relative flex items-center justify-between px-4">
-                <p className="ml-[3px] text-[20px] font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
+            <div className="w-full max-w-[500px] h-auto my-[12.5px] pr-[16px] lg:pr-[20px] bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/40 dark:border-slate-700/40 relative flex items-center justify-between px-4 lg:px-6 py-5 lg:py-6">
+                <p className="ml-[3px] text-[20px] lg:text-[24px] font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
                 <Dropdown 
                     bottleAlertEnabled={bottleAlertEnabled}
                     setBottleAlertEnabled={setBottleAlertEnabled}
