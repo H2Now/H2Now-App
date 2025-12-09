@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import LoadingSpinner from "../../components/LoadingSpinner"
 
 export default function BottleStatistics() {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
     // Helper to get current date 
     const getDateComponents = (date = new Date()) => ({
@@ -54,7 +55,7 @@ export default function BottleStatistics() {
         
         try {
             const response = await fetch(
-                `http://localhost:5000/user/water_bottle/activity?date=${apiDate}`,
+                `${VITE_API_URL}/user/water_bottle/activity?date=${apiDate}`,
                 {
                     method: "GET",
                     credentials: "include",
