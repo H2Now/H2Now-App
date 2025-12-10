@@ -55,7 +55,7 @@ export default function BottleStatistics() {
         
         try {
             const response = await fetch(
-                `${VITE_API_URL}/user/water_bottle/activity?date=${apiDate}`,
+                `${API_URL}/user/water_bottle/activity?date=${apiDate}`,
                 {
                     method: "GET",
                     credentials: "include",
